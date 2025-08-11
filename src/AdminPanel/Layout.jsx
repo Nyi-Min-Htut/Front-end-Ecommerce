@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
-
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
@@ -14,7 +15,9 @@ export default function Layout() {
   };
 
   return (
+
     <div className="flex h-screen">
+      <ToastContainer />
       {/* Sidebar with smooth transition */}
       <Sidebar sidebarstatus= {openSidebar} toggleSidebar={toggleSidebar}/>
       
