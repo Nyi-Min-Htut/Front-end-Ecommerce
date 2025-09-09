@@ -21,41 +21,39 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 
-export default function Category() {
+export default function role() {
   const [open, setOpen] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
+  const [roleName, setroleName] = useState("");
   const [requiredID, setRequireID] = useState(null);
   const [modalType, setModalType] = useState("");
   const [name, setName] = useState("");
-  const [categories, setCategories] = useState([]);
+  const [roles, setroles] = useState([]);
   const [loading, setLoading] = useState(true); // initially loading
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const getCategories = async () => {
+  const getroles = async () => {
     setLoading(true); // start loading
-    let response = await getData("categories?page=" + page);
+    let response = await getData("roles?page=" + page);
     if (response.status === 200) {
-      setCategories(response.data.data);
+      setroles(response.data.data);
       setTotalPages(response.data.data.last_page);
     } else {
-      setCategories([]); // handle error by emptying array
+      setroles([]); // handle error by emptying array
     }
     setLoading(false); // done loading
   };
 
   useEffect(() => {
-    getCategories();
+    getroles();
   }, [page]);
 
   const handleClickOpen = async (id, modal) => {
     if (modal == "create") {
       setModalType("create");
     } else if (modal == "update") {
-      let response = await getData(`categories/${id}`);
-      setCategoryName(response.data.name);
-      setCategoryDescription(response.data.description);
+      let response = await getData(`roles/${id}`);
+      setroleName(response.data.name);
       setModalType("update");
     } else {
       setModalType("delete");
@@ -74,56 +72,52 @@ export default function Category() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!categoryName || !categoryDescription) {
+    if (!roleName ) {
       toast.error("Please fill in all fields");
       return;
     }
     let formdata = new FormData();
-    formdata.append("name", categoryName);
-    formdata.append("description", categoryDescription);
+    formdata.append("name", roleName);
 
-    let response = await postData("categories", formdata);
+    let response = await postData("roles", formdata);
 
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
-      getCategories();
+      setroleName("");
+      getroles();
       handleClose();
-      toast.success("Category created successfully");
+      toast.success("role created successfully");
     } else {
-      alert("Error creating category: " + response.error);
+      alert("Error creating role: " + response.error);
     }
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    if (!categoryName || !categoryDescription) {
+    if (!roleName ) {
       toast.error("Please fill in all fields");
       return;
     }
     let formdata = new FormData();
-    formdata.append("name", categoryName);
-    formdata.append("description", categoryDescription);
-    let response = await postData(`categories/${requiredID}`, formdata);
+    formdata.append("name", roleName);
+    let response = await postData(`roles/${requiredID}`, formdata);
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
-      getCategories();
+      setroleName("");
+      getroles();
       handleClose();
-      toast.success("Category updated successfully");
+      toast.success("role updated successfully");
     } else {
-      alert("Error updating category: " + response.error);
+      alert("Error updating role: " + response.error);
     }
   };
 
   const handleDelete = async () => {
-    let response = await deleteData(`categories/${requiredID}`);
+    let response = await deleteData(`roles/${requiredID}`);
     if (response.status === 200) {
-      toast.success("Category deleted successfully");
-      getCategories();
+      toast.success("role deleted successfully");
+      getroles();
       handleClose();
     } else {
-      toast.error("Error deleting category: " + response.error);
+      toast.error("Error deleting role: " + response.error);
     }
   };
 
@@ -132,9 +126,9 @@ export default function Category() {
       {name}
       <div
         className="flex justify-between mx-10 my-5"
-        title="Create New Category List"
+        title="Create New role List"
       >
-        <h1 className="text-xl font-bold">Category List</h1>
+        <h1 className="text-xl font-bold">Role List</h1>
         <AddBoxIcon
           fontSize="large"
           onClick={() => {
@@ -149,28 +143,22 @@ export default function Category() {
         {modalType === "create" && (
           <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
-              Create New Category
+              Create New role
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                To create a new role, please enter the role name here.
               </DialogContentText>
               <form onSubmit={handleSubmit}>
                 <input
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  value={categoryName}
+                  onChange={(e) => setroleName(e.target.value)}
+                  value={roleName}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Name"
+                  placeholder="role Name"
                 />
 
-                <input
-                  onChange={(e) => setCategoryDescription(e.target.value)}
-                  value={categoryDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Description"
-                />
+             
                 <div className="text-center mt-5 ">
                   <Button
                     type="submit"
@@ -194,28 +182,22 @@ export default function Category() {
         {modalType === "update" && (
           <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
-              Update Category
+              Update role
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                To create a new role, please enter the role name here.
               </DialogContentText>
               <form onSubmit={handleEdit}>
                 <input
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  value={categoryName}
+                  onChange={(e) => setroleName(e.target.value)}
+                  value={roleName}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Name"
+                  placeholder="role Name"
                 />
 
-                <input
-                  onChange={(e) => setCategoryDescription(e.target.value)}
-                  value={categoryDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Description"
-                />
+
                 <div className="text-center mt-5 ">
                   <Button
                     type="submit"
@@ -241,7 +223,7 @@ export default function Category() {
             <DialogTitle id="alert-dialog-title"></DialogTitle>
             <DialogContent>
               <DialogContentText id="alert-dialog-description">
-                Are you sure you want to delete this category? This action
+                Are you sure you want to delete this role? This action
                 cannot be undone.
               </DialogContentText>
             </DialogContent>
@@ -257,16 +239,11 @@ export default function Category() {
 
       <div className="mt-6 flex justify-center">
         <TableContainer component={Paper}>
-          <Table aria-label="categories table" size="small">
+          <Table aria-label="roles table" size="small">
             <TableHead>
               <TableRow>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Category Name</h1>
-                </TableCell>
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">
-                    Category Description
-                  </h1>
+                  <h1 className="text-sm font-semibold">role Name</h1>
                 </TableCell>
 
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
@@ -278,29 +255,27 @@ export default function Category() {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center">
-                    Loading categories...
+                    Loading roles...
                   </TableCell>
                 </TableRow>
-              ) : categories.length === 0 ? (
+              ) : roles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center">
-                    No categories found.
+                    No roles found.
                   </TableCell>
                 </TableRow>
               ) : (
-                categories.map((category) => (
-                  <TableRow key={category.id} hover>
-                    <TableCell align="center">{category.name}</TableCell>
-                    <TableCell align="center">
-                      {category.description || "No description available"}
-                    </TableCell>
+                roles.map((role) => (
+                  <TableRow key={role.id} hover>
+                    <TableCell align="center">{role.name}</TableCell>
+                   
                     <TableCell align="center">
                       <ModeEditOutlineOutlinedIcon
-                        onClick={() => handleClickOpen(category.id, "update")}
+                        onClick={() => handleClickOpen(role.id, "update")}
                         className="cursor-pointer text-green-500 hover:text-green-700"
                       />
                       <DeleteOutlineOutlinedIcon
-                        onClick={() => handleClickOpen(category.id, "delete")}
+                        onClick={() => handleClickOpen(role.id, "delete")}
                         className="cursor-pointer text-red-500 hover:text-red-700 ml-2"
                       />
                     </TableCell>

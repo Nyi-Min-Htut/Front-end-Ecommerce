@@ -18,44 +18,44 @@ import { deleteData, getData, postData } from "../../axios/axios";
 import { toast } from "react-toastify";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import Pagination from "@mui/material/Pagination";
-import Stack from "@mui/material/Stack";
+import { Pagination, Stack } from "@mui/material";
 
-export default function Category() {
+export default function attribute() {
   const [open, setOpen] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
+  const [attributeName, setattributeName] = useState("");
+  const [attributeDescription, setattributeDescription] = useState("");
   const [requiredID, setRequireID] = useState(null);
   const [modalType, setModalType] = useState("");
   const [name, setName] = useState("");
-  const [categories, setCategories] = useState([]);
+  const [attributes, setattributes] = useState([]);
   const [loading, setLoading] = useState(true); // initially loading
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const getCategories = async () => {
+  const getattributes = async () => {
     setLoading(true); // start loading
-    let response = await getData("categories?page=" + page);
+    let response = await getData("attributes");
     if (response.status === 200) {
-      setCategories(response.data.data);
+      setattributes(response.data.data);
       setTotalPages(response.data.data.last_page);
+
     } else {
-      setCategories([]); // handle error by emptying array
+      setattributes([]); // handle error by emptying array
     }
     setLoading(false); // done loading
   };
 
   useEffect(() => {
-    getCategories();
-  }, [page]);
+    getattributes();
+  }, []);
 
   const handleClickOpen = async (id, modal) => {
     if (modal == "create") {
       setModalType("create");
     } else if (modal == "update") {
-      let response = await getData(`categories/${id}`);
-      setCategoryName(response.data.name);
-      setCategoryDescription(response.data.description);
+      let response = await getData(`attributes/${id}`);
+      setattributeName(response.data.name);
+      setattributeDescription(response.data.description);
       setModalType("update");
     } else {
       setModalType("delete");
@@ -74,56 +74,56 @@ export default function Category() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!categoryName || !categoryDescription) {
+    if (!attributeName || !attributeDescription) {
       toast.error("Please fill in all fields");
       return;
     }
     let formdata = new FormData();
-    formdata.append("name", categoryName);
-    formdata.append("description", categoryDescription);
+    formdata.append("name", attributeName);
+    formdata.append("description", attributeDescription);
 
-    let response = await postData("categories", formdata);
-
+    let response = await postData("attributes", formdata);
+    console.log(response);
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
-      getCategories();
+      setattributeName("");
+      setattributeDescription("");
+      getattributes();
       handleClose();
-      toast.success("Category created successfully");
+      toast.success("attribute created successfully");
     } else {
-      alert("Error creating category: " + response.error);
+      alert("Error creating attribute: " + response.error);
     }
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    if (!categoryName || !categoryDescription) {
+    if (!attributeName || !attributeDescription) {
       toast.error("Please fill in all fields");
       return;
     }
     let formdata = new FormData();
-    formdata.append("name", categoryName);
-    formdata.append("description", categoryDescription);
-    let response = await postData(`categories/${requiredID}`, formdata);
+    formdata.append("name", attributeName);
+    formdata.append("description", attributeDescription);
+    let response = await postData(`attributes/${requiredID}`, formdata);
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
-      getCategories();
+      setattributeName("");
+      setattributeDescription("");
+      getattributes();
       handleClose();
-      toast.success("Category updated successfully");
+      toast.success("attribute updated successfully");
     } else {
-      alert("Error updating category: " + response.error);
+      alert("Error updating attribute: " + response.error);
     }
   };
 
   const handleDelete = async () => {
-    let response = await deleteData(`categories/${requiredID}`);
+    let response = await deleteData(`attributes/${requiredID}`);
     if (response.status === 200) {
-      toast.success("Category deleted successfully");
-      getCategories();
+      toast.success("attribute deleted successfully");
+      getattributes();
       handleClose();
     } else {
-      toast.error("Error deleting category: " + response.error);
+      toast.error("Error deleting attribute: " + response.error);
     }
   };
 
@@ -132,9 +132,9 @@ export default function Category() {
       {name}
       <div
         className="flex justify-between mx-10 my-5"
-        title="Create New Category List"
+        title="Create New attribute List"
       >
-        <h1 className="text-xl font-bold">Category List</h1>
+        <h1 className="text-xl font-bold">Attributes List</h1>
         <AddBoxIcon
           fontSize="large"
           onClick={() => {
@@ -149,27 +149,27 @@ export default function Category() {
         {modalType === "create" && (
           <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
-              Create New Category
+              Create New attribute
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                To create a new attribute, please enter the attribute name here.
               </DialogContentText>
               <form onSubmit={handleSubmit}>
                 <input
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  value={categoryName}
+                  onChange={(e) => setattributeName(e.target.value)}
+                  value={attributeName}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Name"
+                  placeholder="attribute Name"
                 />
 
                 <input
-                  onChange={(e) => setCategoryDescription(e.target.value)}
-                  value={categoryDescription}
+                  onChange={(e) => setattributeDescription(e.target.value)}
+                  value={attributeDescription}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Description"
+                  placeholder="attribute Description"
                 />
                 <div className="text-center mt-5 ">
                   <Button
@@ -194,27 +194,27 @@ export default function Category() {
         {modalType === "update" && (
           <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
-              Update Category
+              Update attribute
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                To create a new attribute, please enter the attribute name here.
               </DialogContentText>
               <form onSubmit={handleEdit}>
                 <input
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  value={categoryName}
+                  onChange={(e) => setattributeName(e.target.value)}
+                  value={attributeName}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Name"
+                  placeholder="attribute Name"
                 />
 
                 <input
-                  onChange={(e) => setCategoryDescription(e.target.value)}
-                  value={categoryDescription}
+                  onChange={(e) => setattributeDescription(e.target.value)}
+                  value={attributeDescription}
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Category Description"
+                  placeholder="attribute Description"
                 />
                 <div className="text-center mt-5 ">
                   <Button
@@ -241,7 +241,7 @@ export default function Category() {
             <DialogTitle id="alert-dialog-title"></DialogTitle>
             <DialogContent>
               <DialogContentText id="alert-dialog-description">
-                Are you sure you want to delete this category? This action
+                Are you sure you want to delete this attribute? This action
                 cannot be undone.
               </DialogContentText>
             </DialogContent>
@@ -257,15 +257,15 @@ export default function Category() {
 
       <div className="mt-6 flex justify-center">
         <TableContainer component={Paper}>
-          <Table aria-label="categories table" size="small">
+          <Table aria-label="attributes table" size="small">
             <TableHead>
               <TableRow>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Category Name</h1>
+                  <h1 className="text-sm font-semibold">Attribute Name</h1>
                 </TableCell>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">
-                    Category Description
+                    Attribute Description
                   </h1>
                 </TableCell>
 
@@ -278,29 +278,29 @@ export default function Category() {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center">
-                    Loading categories...
+                    Loading attributes...
                   </TableCell>
                 </TableRow>
-              ) : categories.length === 0 ? (
+              ) : attributes.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} align="center">
-                    No categories found.
+                    No attributes found.
                   </TableCell>
                 </TableRow>
               ) : (
-                categories.map((category) => (
-                  <TableRow key={category.id} hover>
-                    <TableCell align="center">{category.name}</TableCell>
+                attributes.map((attribute) => (
+                  <TableRow key={attribute.id} hover>
+                    <TableCell align="center">{attribute.name}</TableCell>
                     <TableCell align="center">
-                      {category.description || "No description available"}
+                      {attribute.description || "No description available"}
                     </TableCell>
                     <TableCell align="center">
                       <ModeEditOutlineOutlinedIcon
-                        onClick={() => handleClickOpen(category.id, "update")}
+                        onClick={() => handleClickOpen(attribute.id, "update")}
                         className="cursor-pointer text-green-500 hover:text-green-700"
                       />
                       <DeleteOutlineOutlinedIcon
-                        onClick={() => handleClickOpen(category.id, "delete")}
+                        onClick={() => handleClickOpen(attribute.id, "delete")}
                         className="cursor-pointer text-red-500 hover:text-red-700 ml-2"
                       />
                     </TableCell>
@@ -316,7 +316,7 @@ export default function Category() {
         <Pagination
           count={totalPages}
           page={page}
-          onChange={(e, value) => (setPage(value), console.log(value))} // updates state
+          onChange={(e, value) => (setPage(value), console.log(value))} 
         />
       </Stack>
       </div>

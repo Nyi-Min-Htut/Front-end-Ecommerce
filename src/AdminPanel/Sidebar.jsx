@@ -4,6 +4,9 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import Button from "@mui/material/Button";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 import { Outlet, NavLink } from "react-router-dom";
+import CategoryIcon from '@mui/icons-material/Category';
+import AnimationIcon from '@mui/icons-material/Animation';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 
 
 export default function Sidebar({sidebarstatus,toggleSidebar}) {
@@ -41,6 +44,18 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
             </li>
           </NavLink>
 
+           <NavLink 
+            to="/roles" 
+            className={({ isActive }) => 
+              `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
+            }
+          >
+            <li className="text-center hover:text-gray-100 transition-all duration-300 border-transparent py-3">
+              <PersonIcon className="mr-5" />
+              <span className="w-1/5">Roles</span>
+            </li>
+          </NavLink>
+
           {/* Customer link with active state */}
           <NavLink 
             to="/categories" 
@@ -49,8 +64,32 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
             }
           >
             <li className="text-center hover:text-gray-100 transition-all duration-300 border-transparent py-3">
-              <PeopleAltIcon className="mr-5" />
+              <CategoryIcon className="mr-5" />
               <span className="w-1/5">Category</span>
+            </li>
+          </NavLink>
+
+          <NavLink 
+            to="/products" 
+            className={({ isActive }) => 
+              `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
+            }
+          >
+            <li className="text-center hover:text-gray-100 transition-all duration-300 border-transparent py-3">
+              <CheckBoxOutlineBlankIcon className="mr-5" />
+              <span className="w-1/5">Products</span>
+            </li>
+          </NavLink>
+
+           <NavLink 
+            to="/attributes" 
+            className={({ isActive }) => 
+              `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
+            }
+          >
+            <li className="text-center hover:text-gray-100 transition-all duration-300 border-transparent py-3">
+              <AnimationIcon className="mr-5" />
+              <span className="w-1/5">Attributes</span>
             </li>
           </NavLink>
         </ul>
