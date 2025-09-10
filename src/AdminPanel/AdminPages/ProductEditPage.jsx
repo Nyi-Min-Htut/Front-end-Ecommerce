@@ -6,10 +6,10 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { toast } from "react-toastify";
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
-import { getData, postData } from "../../axios/axios";
+import { deleteData, getData, postData } from "../../axios/axios";
 import {
   FormControl,
   InputLabel,
@@ -20,14 +20,14 @@ import {
   DialogContentText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-
-
-export default function ProductCreatePage() {
-  const navigate = useNavigate();
+export default function ProductEditPage() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -35,21 +35,15 @@ export default function ProductCreatePage() {
   const [attributes, setAttributes] = useState([]);
   const [category, setCategory] = useState("");
   const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [productImages, setProductImages] = useState([]);
+  const [newProductImg, setNewProductImg] = useState([]);
   let [categories, setCategories] = useState([]);
   const [attributename, setAttributeName] = useState("");
   const [attributeDescription, setAttributeDescription] = useState("");
-
   const [open, setOpen] = useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const getCategory = async () => {
+  let navigate = useNavigate();
+  const getCategories = async () => {
     let response = await getData("categories");
     if (response.status === 200) {
       setCategories(response.data.data);
@@ -63,38 +57,24 @@ export default function ProductCreatePage() {
       console.log(response.data.data);
     }
   };
-
-  useEffect(() => {
-    getCategory();
-    getAttributes();
-  }, []);
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    console.log(files.length);
-    console.log(files);
-    if (files.length > 6) {
-      alert("You can only upload up to 6 images.");
-      files.length = 0;
-      return;
+  const getProductDetail = async () => {
+    let response = await getData("products/" + id);
+    if (response.status === 200) {
+      setProduct(response.data);
+      setName(response.data.name);
+      setDescription(response.data.description);
+      setPrice(response.data.price);
+      setCategory(response.data.category_id);
+      setAttributeIds(response.data.attributes.map((attr) => attr.id));
+      setProductImages(response.data.images);
     } else {
-      setImages(files);
-      const previewUrls = files.map((file) => URL.createObjectURL(file));
-      setPreviews(previewUrls);
+      toast.error("Something went wrong");
     }
   };
-  const handleRemoveImage = (index) => {
-    const newImages = [...images];
-    const newPreviews = [...previews];
-    newImages.splice(index, 1);
-    newPreviews.splice(index, 1);
-    setImages(newImages);
-    setPreviews(newPreviews);
-  };
 
-  const createProduct = async (e) => {
+  const updateProduct = async (e) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast.warning("Product name is required");
       return;
@@ -115,11 +95,11 @@ export default function ProductCreatePage() {
       toast.warning("Please select at least one attribute");
       return;
     }
-    if (images.length === 0) {
+    if (images.length+productImages.length === 0) {
       toast.warning("Please upload at least one image");
       return;
     }
-    if (images.length > 6) {
+    if (productImages.length + images.length > 6) {
       toast.warning("You can upload a maximum of 6 images");
       return;
     }
@@ -133,7 +113,7 @@ export default function ProductCreatePage() {
     attributeIds.forEach((id) => formData.append("attributeIds[]", id));
     images.forEach((image) => formData.append("images[]", image));
 
-    let response = await postData("products", formData);
+    let response = await postData("products/"+id, formData);
 
     if (response.status === 200) {
       navigate("/products");
@@ -142,7 +122,43 @@ export default function ProductCreatePage() {
     }
   };
 
-  const createAttribute = async (e)=>{
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    console.log(files.length);
+    console.log(files);
+    if (files.length > 6) {
+      alert("You can only upload up to 6 images.");
+      files.length = 0;
+      return;
+    } else {
+      setImages(files);
+      const previewUrls = files.map((file) => URL.createObjectURL(file));
+      setNewProductImg(previewUrls);
+    }
+  };
+  const handleRemoveImage = (index) => {
+    const newImages = [...images];
+    const newproductImages = [...newProductImg];
+    newImages.splice(index, 1);
+    newproductImages.splice(index, 1);
+    setImages(newImages);
+    setNewProductImg(newproductImages);
+  };
+
+  useEffect(() => {
+    getProductDetail();
+    getCategories();
+    getAttributes();
+  }, [id]);
+
+  const createAttribute = async (e) => {
     e.preventDefault();
     if (!attributename.trim()) {
       toast.warning("Attribute name is required");
@@ -164,61 +180,73 @@ export default function ProductCreatePage() {
       toast.success("Attribute created successfully");
       getAttributes();
     }
+  };
+
+  const deleteProductImage =async(imageID)=>{
+    const deleteImage = await deleteData("products/images/" + imageID);
+    if(deleteImage.status === 200){
+      toast.success("Image deleted successfully");
+      getProductDetail();
+    }else
+    {
+      toast.error("Failed to delete image");
+    }
   }
 
   return (
     <div>
       {/* dialog */}
-        <Dialog
+      {attributeIds}
+      <Dialog
         onClose={handleClose}
         aria-labelledby="customized-dialog-title"
         open={open}
       >
         <div className=" ">
-            <h1 className="text-xl font-bold text-center py-5">
-              Create New Attributes
-            </h1>
-            <DialogContent>
-              <DialogContentText>
-                To create a new category, please enter the category name here.
-              </DialogContentText>
-              <form onSubmit={createAttribute}>
-                <input
-                  onChange={(e) => setAttributeName(e.target.value)}
-                  value={attributename}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Name"
-                />
+          <h1 className="text-xl font-bold text-center py-5">
+            Create New Attributes
+          </h1>
+          <DialogContent>
+            <DialogContentText>
+              To create a new category, please enter the category name here.
+            </DialogContentText>
+            <form onSubmit={createAttribute}>
+              <input
+                onChange={(e) => setAttributeName(e.target.value)}
+                value={attributename}
+                type="text"
+                className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                placeholder="Attribute Name"
+              />
 
-                <input
-                  onChange={(e) => setAttributeDescription(e.target.value)}
-                  value={attributeDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Description"
-                />
-                <div className="text-center mt-5 ">
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                  >
-                    Submit
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="primary">
-                Cancel
-              </Button>
-            </DialogActions>
-          </div>
+              <input
+                onChange={(e) => setAttributeDescription(e.target.value)}
+                value={attributeDescription}
+                type="text"
+                className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                placeholder="Attribute Description"
+              />
+              <div className="text-center mt-5 ">
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                >
+                  Submit
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              Cancel
+            </Button>
+          </DialogActions>
+        </div>
       </Dialog>
       <form
-        onSubmit={createProduct}
+        onSubmit={updateProduct}
         className=" w-4/5 mx-auto my-10 px-40 py-5 rounded-lg shadow-lg"
       >
         <h1 className="text-center text-xl font-bold">Create New Product</h1>
@@ -246,7 +274,6 @@ export default function ProductCreatePage() {
           className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
           placeholder="Price"
         />
-
         <FormControl fullWidth sx={{ mt: 3 }}>
           <InputLabel id="category-select-label">Category</InputLabel>
           <Select
@@ -270,6 +297,7 @@ export default function ProductCreatePage() {
             id="checkboxes-tags-demo"
             options={attributes}
             disableCloseOnSelect
+            value={attributes.filter((attr) => attributeIds.includes(attr.id))}
             getOptionLabel={(option) => option.name}
             onChange={(event, value) => {
               setAttributeIds(value.map((item) => item.id));
@@ -297,11 +325,14 @@ export default function ProductCreatePage() {
             )}
           />
           <div>
-            <AddCircleOutlineIcon onClick={handleClickOpen} className="text-gray-500 hover:text-blue-300 transform transition-transform duration-300 hover:scale-125" />
+            <AddCircleOutlineIcon
+              onClick={handleClickOpen}
+              className="text-gray-500 hover:text-blue-300 transform transition-transform duration-300 hover:scale-125"
+            />
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 w-1/4">
+        <div className="flex flex-col gap-4  w-full">
           {/* Upload Button */}
           <input
             accept="image/*"
@@ -312,34 +343,56 @@ export default function ProductCreatePage() {
             onChange={handleImageChange}
           />
           <label htmlFor="upload-images">
-            <Button  component="span">
-              Upload Images
-            </Button>
+            <Button component="span">Upload Images</Button>
           </label>
 
-          {/* Previews */}
-          {previews.length > 0 && (
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              {previews.map((src, idx) => (
-                <div className="relative w-32 h-32" key={idx}>
-                  {/* Remove button */}
-                  <span
-                    onClick={() => handleRemoveImage(idx)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer text-xs z-10"
-                  >
-                    x
-                  </span>
+            {newProductImg.length > 0 && <div>New Images</div>}
 
-                  {/* Image */}
-                  <img
-                    src={src}
-                    alt={`preview-${idx}`}
-                    className="rounded-md border w-32 h-32 object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* new images */}
+          <div className=" flex flex-wrap gap-2">
+            {newProductImg.map((src, idx) => (
+              <div className="relative w-32 h-32" key={idx}>
+                {/* Remove button */}
+                <span
+                  onClick={() => handleRemoveImage(idx)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer text-xs z-10"
+                >
+                  x
+                </span>
+
+                {/* Image */}
+                <img
+                  src={src}
+                  alt={`preview-${idx}`}
+                  className="rounded-md border w-32 h-32 object-cover"
+                />
+              </div>
+            ))}
+          </div>
+                    <div>Original Images</div>
+          {/* productImages */}
+          <div className=" flex flex-wrap gap-2">
+            
+            {productImages.map((src, idx) => (
+              <div className="relative w-32 h-32" key={idx}>
+                
+                {/* Remove button */}
+                <span
+                  onClick={() => deleteProductImage(src.id)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer text-xs z-10"
+                >
+                  x
+                </span>
+
+                {/* Image */}
+                <img
+                  src={src.image_url}
+                  alt={`preview-${idx}`}
+                  className="rounded-md border w-32 h-32 object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>

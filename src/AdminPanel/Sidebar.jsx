@@ -33,7 +33,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
 
           {/* list of sidebar */}
         <NavLink 
-            to="/admin" 
+            to="/employees" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }

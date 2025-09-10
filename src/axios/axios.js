@@ -14,7 +14,11 @@ export async function getData(url, params)
 
 export async function postData(url, data) {
     try {
-        const response = await axios.post(api + '/' + url, data);
+        const response = await axios.post(api + '/' + url, data,{
+            headers:{
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return {
             data: response.data,
             status: response.status

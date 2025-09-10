@@ -207,9 +207,11 @@ export default function product() {
               ) : (
                 products.map((product) => (
                   <TableRow
+                    onClick={()=>navigate(`/products/${product.id}/edit`)}
                     key={product.id}
                     hover
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    className='cursor-pointer'
                   >
                     <TableCell
                       component="th"
