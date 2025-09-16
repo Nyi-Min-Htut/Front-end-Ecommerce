@@ -8,46 +8,69 @@ import Attribute from '../AdminPanel/AdminPages/Attribute';
 import Role from '../AdminPanel/AdminPages/Role';
 import ProductEditPage from '../AdminPanel/AdminPages/ProductEditPage';
 import EmployeeCreate from '../AdminPanel/AdminPages/EmployeeCreate';
+import LoginPage from '../AdminPanel/AdminPages/LoginPage';
+import ProtectedRoute from '../AdminPanel/AdminPages/ProtectedRoute';
+import HomePageLayout from '../AdminPanel/Ecommerce/Layout/HomePageLayout';
+import HomePage from '../AdminPanel/Ecommerce/Layout/Pages/HomePage';
+import ProductDetail from '../AdminPanel/Ecommerce/Layout/Pages/ProductDetail';
+import OrderListPage from '../AdminPanel/Ecommerce/Layout/Pages/OrderlistPage';
+import OrderDetail from '../AdminPanel/Ecommerce/Layout/Pages/OrderDetailPage';
 
 const router = createBrowserRouter([
   {
-    path:"/",
-    element: <Layout/>,
+    path:"/adminlogin",
+    element: <LoginPage/>
+  },
+  {
+    path:'/',
+    element: <HomePageLayout/>,
     children:[
       {
-        path:"employees",
-        element: <Employee/>
+        path:"/",
+        element: <HomePage/>
       },
       {
-        path:"employees/create",
-        element: <EmployeeCreate/>
+        path:'/home',
+        element: <HomePage/>
       },
       {
-        path:"categories",
-        element: <Category/>
+        path:'/products/:id',
+        element: <ProductDetail/>
       },
       {
-        path:"products",
-        element: <Product/>
+        path:'/orderedlist',
+        element: <OrderListPage/>
       },
       {
-        path:"products/create",
-        element: <ProductCreatePage/>
-      },
-      {
-        path:"products/:id/edit",
-        element: <ProductEditPage/>
-      },
-      {
-        path:"attributes",
-        element: <Attribute/>
-      },
-      {
-        path:'roles',
-        element: <Role/>
+        path:'/orderedlist/:id',
+        element: <OrderDetail/>
       }
-
+      
     ]
+  },
+  {
+    path: "/admin",
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "",
+        element: <Layout />, // Layout wraps all children
+        children: [
+          { path: "employees", element: <Employee /> },
+          { path: "employees/create", element: <EmployeeCreate /> },
+          { path: "categories", element: <Category /> },
+          { path: "products", element: <Product /> },
+          { path: "products/create", element: <ProductCreatePage /> },
+          { path: "products/:id/edit", element: <ProductEditPage /> },
+          { path: "attributes", element: <Attribute /> },
+          { path: "roles", element: <Role /> }
+        ]
+      }
+    ]
+  },
+  {
+    path: "/unauthorized",
+    element: <div>You do not have access to this page!</div>
   }
 ]);
 
