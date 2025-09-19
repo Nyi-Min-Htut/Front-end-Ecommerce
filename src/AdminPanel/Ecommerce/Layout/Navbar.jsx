@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Menu,
   Close,
   Search,
   ShoppingCart,
   Person,
-  Favorite
-} from '@mui/icons-material';
+  Favorite,
+} from "@mui/icons-material";
 
-const Navbar = () => {
+const Navbar = ({ onSearchChange }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [search, setSearch] = useState();
+
+  const authUser = JSON.parse(localStorage.getItem("authUser"));
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (onSearchChange) onSearchChange(search);
   };
 
   return (
@@ -65,36 +73,60 @@ const Navbar = () => {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
                 </div>
-                <input
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  placeholder="Search"
-                  type="search"
-                />
+                <form onSubmit={handleSearch}>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Search"
+                    type="search"
+                  />
+                </form>
               </div>
             </div>
           </div>
 
           {/* Right icons */}
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <button className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <div className="flex items-center ">
+            <div className="flex-shrink-0 flex items-center">
+              {/* Search Icon (mobile only) */}
+              <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <Search className="h-6 w-6 md:hidden" />
+                <span className="sr-only">Search</span>
               </button>
-              <button className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+
+              {/* Wishlist Icon */}
+              <button className="ml-2 p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <Favorite className="h-6 w-6" />
                 <span className="sr-only">Wishlist</span>
               </button>
-              <button className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <ShoppingCart className="h-6 w-6" />
-                <span className="sr-only">Cart</span>
-                <span className="absolute top-2 right-12 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-                99
+
+              {/* Shopping Cart with Badge */}
+              <div className="ml-2 relative">
+                <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <ShoppingCart className="h-6 w-6" />
+                  <span className="sr-only">Cart</span>
+                </button>
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                  3
                 </span>
-              </button>
-              <button className="ml-4 p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <Person className="h-6 w-6" />
-                <span className="sr-only">Account</span>
-              </button>
+              </div>
+
+              {/* User Account */}
+              <div className="ml-2">
+                <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  {authUser ? (
+                    <img
+                      src={authUser.image_url}
+                      alt="User profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <Person className="h-6 w-6" />
+                  )}
+                  <span className="sr-only">Account</span>
+                </button>
+              </div>
             </div>
 
             {/* Mobile menu button */}
@@ -158,8 +190,12 @@ const Navbar = () => {
                 </div>
               </div>
               <div className="ml-3">
-                <div className="text-base font-medium text-gray-800">John Doe</div>
-                <div className="text-sm font-medium text-gray-500">john.doe@example.com</div>
+                <div className="text-base font-medium text-gray-800">
+                  John Doe
+                </div>
+                <div className="text-sm font-medium text-gray-500">
+                  john.doe@example.com
+                </div>
               </div>
             </div>
             <div className="mt-3 space-y-1">

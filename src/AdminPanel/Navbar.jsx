@@ -1,6 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 export default function Navbar({openSidebar, toggleSidebar}) {
+  const [search, setSearch] = useState();
+  const authUser = JSON.parse(localStorage.getItem('authUser'));
+
   return (
     <nav className="flex justify-end px-10 py-2 bg-white shadow-md text-gray-800">
           {!openSidebar && (
@@ -21,12 +24,12 @@ export default function Navbar({openSidebar, toggleSidebar}) {
             <ul className="flex justify-end gap-6 px-10 items-center">
               <li>
                 <img
-                  src="https://i.pinimg.com/1200x/d9/73/ee/d973ee6ac0805aaa90b8234f5dcc6591.jpg"
+                  src={authUser.image_url}
                   alt=""
                   className="bg-red-300 w-10 h-10 rounded-full"
                 />
               </li>
-              <li >Admin</li>
+              <li >{authUser.name}</li>
             </ul>
           </div>
         </nav>

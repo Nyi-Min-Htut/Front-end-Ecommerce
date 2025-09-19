@@ -94,7 +94,7 @@ export default function employee() {
         <AddBoxIcon
           fontSize="large"
           onClick={() => {
-            navigate('/employees/create');
+            navigate('/admin/employees/create');
           }}
           className="cursor-pointer text-blue-400 hover:text-blue-600"
         />
@@ -219,7 +219,7 @@ export default function employee() {
               ) : (
                 employees.map((employee) => (
                   <TableRow
-                    onClick={()=>navigate(`/employees/${employee.id}/edit`)}
+                    
                     key={employee.id}
                     hover
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -279,7 +279,7 @@ export default function employee() {
 
                     <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                       <ModeEditOutlineOutlinedIcon
-                      onClick={() => handleClickOpen(employee.id, "updateStock")}
+                        onClick={()=>navigate(`/admin/employees/${employee.id}/edit`)}
                         className="cursor-pointer text-green-500 hover:text-green-700"
                       />
                       <DeleteOutlineOutlinedIcon

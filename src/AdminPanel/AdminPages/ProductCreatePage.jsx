@@ -136,7 +136,7 @@ export default function ProductCreatePage() {
     let response = await postData("products", formData);
 
     if (response.status === 200) {
-      navigate("/products");
+      navigate("/admin/products");
     } else {
       toast.error("Failed to create product. Please try again.");
     }

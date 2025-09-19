@@ -1,9 +1,19 @@
 import axios from "axios";
 const api = "http://localhost:8000/api";
 
-export async function getData(url, params) {
-  const token = localStorage.getItem("authToken");
-  let response = await axios.get(api + "/" + url, {
+// helper function to choose token
+function getToken(userType = "employee") {
+  if (userType === "customer") {
+    return localStorage.getItem("cauthToken");
+  }
+  // default = employee
+  return localStorage.getItem("authToken");
+}
+
+// GET
+export async function getData(url, params, userType = "employee") {
+  const token = getToken(userType);
+  let response = await axios.get(`${api}/${url}`, {
     params,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -15,11 +25,14 @@ export async function getData(url, params) {
   };
 }
 
-export async function postData(url, data) {
+// POST
+export async function postData(url, data, userType = "employee") {
   try {
-    const response = await axios.post(api + "/" + url, data, {
+    const token = getToken(userType);
+    const response = await axios.post(`${api}/${url}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
       },
       withCredentials: true,
     });
@@ -34,9 +47,16 @@ export async function postData(url, data) {
   }
 }
 
-export async function deleteData(url) {
+// DELETE
+export async function deleteData(url, userType = "employee") {
   try {
-    const response = await axios.delete(api + "/" + url);
+    const token = getToken(userType);
+    const response = await axios.delete(`${api}/${url}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      withCredentials: true,
+    });
     return {
       data: response.data,
       status: response.status,

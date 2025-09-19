@@ -20,6 +20,7 @@ import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutl
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { useNavigate } from 'react-router-dom';
 import { Pagination, Stack } from "@mui/material";
+import AddIcon from '@mui/icons-material/Add';
 
 export default function product() {
     const navigate = useNavigate();
@@ -94,7 +95,7 @@ export default function product() {
         <AddBoxIcon
           fontSize="large"
           onClick={() => {
-            navigate('/products/create');
+            navigate('/admin/products/create');
           }}
           className="cursor-pointer text-blue-400 hover:text-blue-600"
         />
@@ -207,7 +208,7 @@ export default function product() {
               ) : (
                 products.map((product) => (
                   <TableRow
-                    onClick={()=>navigate(`/products/${product.id}/edit`)}
+                  
                     key={product.id}
                     hover
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -242,10 +243,17 @@ export default function product() {
                     </TableCell>
 
                     <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      <ModeEditOutlineOutlinedIcon
+                      <AddIcon
                       onClick={() => handleClickOpen(product.id, "updateStock")}
-                        className="cursor-pointer text-green-500 hover:text-green-700"
+                        className="cursor-pointer text-blue-500 hover:text-blue-700"
                       />
+                      <ModeEditOutlineOutlinedIcon
+                        onClick={() => {
+                          navigate(`/admin/products/${product.id}/edit`);
+                        }}
+                        className="cursor-pointer text-green-500 hover:text-green-700 ml-2"
+                      />
+                      
                       <DeleteOutlineOutlinedIcon
                         onClick={() => handleClickOpen(product.id, "delete")}
                         className="cursor-pointer text-red-500 hover:text-red-700 ml-2"

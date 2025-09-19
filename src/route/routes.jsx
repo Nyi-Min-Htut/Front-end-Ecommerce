@@ -15,11 +15,21 @@ import HomePage from '../AdminPanel/Ecommerce/Layout/Pages/HomePage';
 import ProductDetail from '../AdminPanel/Ecommerce/Layout/Pages/ProductDetail';
 import OrderListPage from '../AdminPanel/Ecommerce/Layout/Pages/OrderlistPage';
 import OrderDetail from '../AdminPanel/Ecommerce/Layout/Pages/OrderDetailPage';
+import CustomerRegister from '../AdminPanel/Ecommerce/Layout/Pages/CustomerRegister';
+import CustomerLogin from '../AdminPanel/Ecommerce/Layout/Pages/CustomerLogin';
 
 const router = createBrowserRouter([
   {
     path:"/adminlogin",
     element: <LoginPage/>
+  },
+  {
+    path:'/register',
+    element: <CustomerRegister/>
+  },
+  {
+    path:'/login',
+    element: <CustomerLogin/>
   },
   {
     path:'/',

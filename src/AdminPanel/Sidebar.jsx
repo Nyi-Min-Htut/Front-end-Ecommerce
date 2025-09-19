@@ -33,7 +33,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
 
           {/* list of sidebar */}
         <NavLink 
-            to="/employees" 
+            to="/admin/employees" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }
@@ -45,7 +45,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
           </NavLink>
 
            <NavLink 
-            to="/roles" 
+            to="/admin/roles" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }
@@ -58,7 +58,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
 
           {/* Customer link with active state */}
           <NavLink 
-            to="/categories" 
+            to="/admin/categories" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }
@@ -70,7 +70,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
           </NavLink>
 
           <NavLink 
-            to="/products" 
+            to="/admin/products" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }
@@ -82,7 +82,7 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
           </NavLink>
 
            <NavLink 
-            to="/attributes" 
+            to="/admin/attributes" 
             className={({ isActive }) => 
               `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
             }

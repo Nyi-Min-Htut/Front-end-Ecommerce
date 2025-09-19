@@ -142,7 +142,7 @@ const handleImageChange = (e) => {
     let response = await postData("employees", formData);
 
     if (response.status === 200) {
-      navigate("/employees");
+      navigate("/admin/employees");
     } else {
       toast.error("Failed to create employee. Please try again.");
     }
