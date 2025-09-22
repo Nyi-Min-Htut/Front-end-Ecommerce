@@ -7,14 +7,13 @@ import {
 } from "@mui/icons-material";
 import { getData } from "../../../../axios/axios";
 import { toast } from "react-toastify";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 const Products = () => {
   const [activeCategory, setActiveCategory] = useState("all");
-
   const [products, setProducts] = useState([]);
   const {searchQuery} = useOutletContext();
-
+  const navigate = useNavigate();
 
   const getProducts = async () => {
   let url = "ecommerce_products";
@@ -27,7 +26,7 @@ const Products = () => {
     url += "?category_id=" + activeCategory;
   }
 
-  const response = await getData(url);
+  const response = await getData(url,null,'customer');
   if (response.status === 200) {
     setProducts(response.data.data);
     console.log("it worked");
@@ -40,7 +39,7 @@ const Products = () => {
 
   const getCategories = async () => {
     let response;
-    response = await getData("categories");
+    response = await getData("categories",null,'customer');
     if (response.status === 200) {
       console.log(response.data.data);
       setCategories(response.data.data);
@@ -102,6 +101,7 @@ const Products = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {products.map((product) => (
             <div
+              onClick={()=>navigate('/products/'+product.id)}
               key={product.id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
             >

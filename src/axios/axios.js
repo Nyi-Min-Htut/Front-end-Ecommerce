@@ -3,11 +3,15 @@ const api = "http://localhost:8000/api";
 
 // helper function to choose token
 function getToken(userType = "employee") {
+  let token;
   if (userType === "customer") {
-    return localStorage.getItem("cauthToken");
+    
+    token =localStorage.getItem("eauthToken");
+  }else{
+    token =localStorage.getItem("authToken");
+
   }
-  // default = employee
-  return localStorage.getItem("authToken");
+  return token;
 }
 
 // GET
@@ -29,6 +33,7 @@ export async function getData(url, params, userType = "employee") {
 export async function postData(url, data, userType = "employee") {
   try {
     const token = getToken(userType);
+    console.log(token);
     const response = await axios.post(`${api}/${url}`, data, {
       headers: {
         "Content-Type": "multipart/form-data",
