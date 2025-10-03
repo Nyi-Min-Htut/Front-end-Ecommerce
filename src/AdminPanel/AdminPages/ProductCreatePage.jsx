@@ -1,13 +1,6 @@
-import React, { useEffect, useState } from "react";
-import Checkbox from "@mui/material/Checkbox";
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { useEffect, useState } from "react";
+
 import { toast } from "react-toastify";
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 
 import { getData, postData } from "../../axios/axios";
 import {
@@ -16,13 +9,21 @@ import {
   Select,
   MenuItem,
   Button,
-  Dialog,
-  DialogContentText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton
+
 } from "@mui/material";
+
+
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 
-const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
-const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
 
 
@@ -32,17 +33,24 @@ export default function ProductCreatePage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [attributeIds, setAttributeIds] = useState([]);
-  const [attributes, setAttributes] = useState([]);
   const [category, setCategory] = useState("");
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   let [categories, setCategories] = useState([]);
-  const [attributename, setAttributeName] = useState("");
-  const [attributeDescription, setAttributeDescription] = useState("");
+  const [attributeValue, setAttrValue] = useState("");
+  const [selectedAttr, setSelectedAttr] = useState();
+  const [attributes, setAttributes] = useState([]);
+  const [variations, setVariations] = useState([]);
+
+  //testing
+  const [attributeValues, setAttributeValues] = useState({});
+
+
 
   const [open, setOpen] = useState(false);
 
-  const handleClickOpen = () => {
+  const handleClickOpen = (attr) => {
+    setSelectedAttr(attr);
     setOpen(true);
   };
   const handleClose = () => {
@@ -57,17 +65,16 @@ export default function ProductCreatePage() {
   };
 
   const getAttributes = async () => {
-    let response = await getData("attributes");
-    if (response.status === 200) {
-      setAttributes(response.data.data);
-      console.log(response.data.data);
+    let response = await getData("attributes/category/" + category);
+    if (response.status == 200) {
+      setAttributes(response.data);
     }
   };
 
   useEffect(() => {
     getCategory();
     getAttributes();
-  }, []);
+  }, [category]);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -94,7 +101,7 @@ export default function ProductCreatePage() {
 
   const createProduct = async (e) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       toast.warning("Product name is required");
       return;
@@ -109,10 +116,6 @@ export default function ProductCreatePage() {
     }
     if (!category) {
       toast.warning("Please select a category");
-      return;
-    }
-    if (attributeIds.length === 0) {
-      toast.warning("Please select at least one attribute");
       return;
     }
     if (images.length === 0) {
@@ -130,7 +133,9 @@ export default function ProductCreatePage() {
     formData.append("description", description);
     formData.append("price", price);
     formData.append("category_id", category);
-    attributeIds.forEach((id) => formData.append("attributeIds[]", id));
+    Object.keys(attributeValues).forEach((key) => {
+      formData.append(`attributes[${key}]`, attributeValues[key]);
+    });
     images.forEach((image) => formData.append("images[]", image));
 
     let response = await postData("products", formData);
@@ -142,81 +147,11 @@ export default function ProductCreatePage() {
     }
   };
 
-  const createAttribute = async (e)=>{
-    e.preventDefault();
-    if (!attributename.trim()) {
-      toast.warning("Attribute name is required");
-      return;
-    }
-    if (!attributeDescription.trim()) {
-      toast.warning("Attribute description is required");
-      return;
-    }
-    let formdata = new FormData();
-    formdata.append("name", attributename);
-    formdata.append("description", attributeDescription);
-    let response = await postData("attributes", formdata);
-    if (response.status == 200) {
-      setAttributeName("");
-      setAttributeDescription("");
-      getAttributes();
-      handleClose();
-      toast.success("Attribute created successfully");
-      getAttributes();
-    }
-  }
 
   return (
     <div>
       {/* dialog */}
-        <Dialog
-        onClose={handleClose}
-        aria-labelledby="customized-dialog-title"
-        open={open}
-      >
-        <div className=" ">
-            <h1 className="text-xl font-bold text-center py-5">
-              Create New Attributes
-            </h1>
-            <DialogContent>
-              <DialogContentText>
-                To create a new category, please enter the category name here.
-              </DialogContentText>
-              <form onSubmit={createAttribute}>
-                <input
-                  onChange={(e) => setAttributeName(e.target.value)}
-                  value={attributename}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Name"
-                />
 
-                <input
-                  onChange={(e) => setAttributeDescription(e.target.value)}
-                  value={attributeDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Description"
-                />
-                <div className="text-center mt-5 ">
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                  >
-                    Submit
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="primary">
-                Cancel
-              </Button>
-            </DialogActions>
-          </div>
-      </Dialog>
       <form
         onSubmit={createProduct}
         className=" w-4/5 mx-auto my-10 px-40 py-5 rounded-lg shadow-lg"
@@ -262,44 +197,174 @@ export default function ProductCreatePage() {
           </Select>
         </FormControl>
 
-        {/* Attribute Dropdown */}
-        <div className="flex justify-between items-center text-center">
-          <Autocomplete
-            sx={{ mt: 3, mb: 3, width: "90%" }}
-            multiple
-            id="checkboxes-tags-demo"
-            options={attributes}
-            disableCloseOnSelect
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setAttributeIds(value.map((item) => item.id));
-            }}
-            renderOption={(props, option, { selected }) => {
-              const { key, ...optionProps } = props;
-              return (
-                <li key={key} {...optionProps}>
-                  <Checkbox
-                    icon={icon}
-                    checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
+        {/* Attribute */}
+        <div className="max-w-4xl mx-auto mt-6 px-4">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Select Attributes</h2>
+
+          {attributes && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {attributes.map((attr, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow duration-300"
+                >
+                  <label className="block text-gray-700 font-medium mb-2">
+                    {attr.name}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={`Enter ${attr.name}`}
+                    value={attributeValues[attr.id] || ""}
+                    onChange={(e) =>
+                      setAttributeValues({
+                        ...attributeValues,
+                        [attr.id]: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  {option.name}
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Attributes"
-                placeholder="Select attributes"
-              />
-            )}
-          />
-          <div>
-            <AddCircleOutlineIcon onClick={handleClickOpen} className="text-gray-500 hover:text-blue-300 transform transition-transform duration-300 hover:scale-125" />
-          </div>
+                </div>
+              ))}
+
+              {/* Static Stock Input */}
+              <div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Stock
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter stock quantity"
+                  value={attributeValues["stock"] || ""}
+                  onChange={(e) =>
+                    setAttributeValues({
+                      ...attributeValues,
+                      stock: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Static Price Input */}
+              <div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Price
+                </label>
+                <input
+                  type="number"
+                  placeholder="Enter variation price"
+                  value={attributeValues["price"] || ""}
+                  onChange={(e) =>
+                    setAttributeValues({
+                      ...attributeValues,
+                      price: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          )}
         </div>
+
+        <div className='flex justify-end'>
+          <button
+            type="button"
+            className="px-5 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              // Only add if at least one attribute value is entered
+              const hasValues = Object.values(attributeValues).some(val => val !== "");
+              if (!hasValues) {
+                toast.warning("Please enter at least one attribute value for the variation.");
+                return;
+              }
+              setVariations([...variations, { ...attributeValues }]);
+              setAttributeValues({});
+            }}
+          >
+            Add Variation
+          </button>
+        </div>
+
+       
+{variations.length > 0 && (
+  <div className="mt-6">
+    <h3 className="font-bold mb-4">Added Variations:</h3>
+    <TableContainer component={Paper} elevation={3}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            {attributes.map(attr => (
+              <TableCell key={attr.id}>{attr.name}</TableCell>
+            ))}
+            <TableCell>Stock</TableCell>
+            <TableCell>Price</TableCell>
+            <TableCell>Action</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {variations.map((variation, idx) => (
+            <TableRow key={idx} hover>
+              {attributes.map(attr => (
+                <TableCell key={attr.id}>
+                  {variation[attr.id] || "-"}
+                </TableCell>
+              ))}
+              <TableCell>{variation.stock || "-"}</TableCell>
+              <TableCell>{variation.price || "-"}</TableCell>
+              <TableCell>
+                <IconButton
+                  color="error"
+                  onClick={() => setVariations(variations.filter((_, i) => i !== idx))}
+                  size="small"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </div>
+)}
+
+
+
+        {/* Just for demo — modal simulation */}
+        {open && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h3 className="text-lg font-semibold mb-4">
+                Selected Attribute: {selectedAttr}
+              </h3>
+              <input
+                type="text"
+                value={attributeValue}
+                onChange={(e) => setAttrValue(e.target.value)}
+                placeholder={`Enter value for ${selectedAttr}`}
+                className="border p-2 w-full rounded"
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={handleClose}
+                  className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Close
+                </button>s
+                <button
+                  onClick={() => {
+                    console.log(`Saved ${selectedAttr}: ${attributeValue}`);
+                    handleClose();
+                  }}
+                  className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 w-1/4">
           {/* Upload Button */}
@@ -312,7 +377,7 @@ export default function ProductCreatePage() {
             onChange={handleImageChange}
           />
           <label htmlFor="upload-images">
-            <Button  component="span">
+            <Button component="span">
               Upload Images
             </Button>
           </label>
@@ -354,6 +419,8 @@ export default function ProductCreatePage() {
           </Button>
         </div>
       </form>
+
+
     </div>
   );
 }

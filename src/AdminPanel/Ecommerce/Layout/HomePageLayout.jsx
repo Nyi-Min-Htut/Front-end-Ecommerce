@@ -82,7 +82,7 @@ export default function HomePageLayout() {
   return (
     <div>
       <Navbar onSearchChange={setSearchQuery} onCartClick={handleOpenCart} />
-      <Outlet context={{ searchQuery }} />
+      <Outlet context={{ searchQuery, handleOpenCart }} />
 
       {/* Single Column Cart Modal */}
       <Modal 

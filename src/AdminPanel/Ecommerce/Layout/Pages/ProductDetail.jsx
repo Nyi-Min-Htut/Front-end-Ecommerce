@@ -11,7 +11,7 @@ import {
   Remove,
   Add,
 } from "@mui/icons-material";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { getData, postData } from "../../../../axios/axios";
 import { toast } from "react-toastify";
 
@@ -20,32 +20,9 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
-
+  const { handleOpenCart } = useOutletContext();
   // Sample product data
-  const [product, setProduct] = useState({
-    id: 1,
-    name: "Wireless Bluetooth Headphones",
-    price: 89.99,
-    category: "electronics",
-    rating: 4.5,
-    reviews: 128,
-    description:
-      "Experience crystal-clear sound with our premium wireless headphones. Featuring noise cancellation, 30-hour battery life, and comfortable over-ear design.",
-    features: [
-      "Active Noise Cancellation",
-      "30-hour battery life",
-      "Bluetooth 5.0",
-      "Built-in microphone",
-      "Foldable design",
-    ],
-    colors: ["Black", "White", "Blue"],
-    images: [
-      "https://via.placeholder.com/600x600?text=Headphones+Front",
-      "https://via.placeholder.com/600x600?text=Headphones+Side",
-      "https://via.placeholder.com/600x600?text=Headphones+Back",
-      "https://via.placeholder.com/600x600?text=Headphones+Case",
-    ],
-  });
+  const [product, setProduct] = useState();
 
   // Related products
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -104,8 +81,13 @@ const ProductDetail = () => {
     return stars;
   };
 
+  const handleAddToCart= ()=>{
+    
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+   <div>
+     {product && <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -152,7 +134,7 @@ const ProductDetail = () => {
 
           <div className="flex items-center mb-4">
             <div className="flex mr-2">{renderRatingStars(product.rating)}</div>
-            <span className="text-gray-600">({product.reviews} reviews)</span>
+            <span className="text-gray-600">({product.reviews.length} reviews)</span>
           </div>
 
           <div className="mb-6">
@@ -208,8 +190,8 @@ const ProductDetail = () => {
 
           {/* Action Buttons */}
           <div className="flex space-x-4 mb-8">
-            <button className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
-              <AddShoppingCart className="mr-2" />
+            <button onClick={handleAddToCart} className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
+              <AddShoppingCart className="mr-2"  />
               Add to Cart
             </button>
             <button
@@ -279,7 +261,8 @@ const ProductDetail = () => {
           })}
         </div>
       </div>
-    </div>
+      </div>}
+   </div>
   );
 };
 

@@ -20,7 +20,7 @@ import CustomerLogin from '../AdminPanel/Ecommerce/Layout/Pages/CustomerLogin';
 
 const router = createBrowserRouter([
   {
-    path:"/adminlogin",
+    path:"/admin/login",
     element: <LoginPage/>
   },
   {

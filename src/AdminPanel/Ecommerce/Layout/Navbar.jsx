@@ -25,7 +25,6 @@ const Navbar = ({ onSearchChange, onCartClick }) => {
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
-      <button className='bg-red-400' onClick={onCartClick} >cart</button>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and mobile menu button */}
@@ -104,7 +103,7 @@ const Navbar = ({ onSearchChange, onCartClick }) => {
 
               {/* Shopping Cart with Badge */}
               <div className="ml-2 relative">
-                <button className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button onClick={onCartClick} className="p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                   <ShoppingCart className="h-6 w-6" />
                   <span className="sr-only">Cart</span>
                 </button>

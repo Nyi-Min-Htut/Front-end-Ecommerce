@@ -20,6 +20,9 @@ import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutl
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
+import Autocomplete from '@mui/material/Autocomplete';
+import Chip from "@mui/material/Chip";
+import Checkbox from "@mui/material/Checkbox";
 
 export default function Category() {
   const [open, setOpen] = useState(false);
@@ -32,6 +35,9 @@ export default function Category() {
   const [loading, setLoading] = useState(true); // initially loading
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [attributes, setAttributes] = useState([]);
+  const [selectedAttributes, setSelectedAttributes] = useState([]);
+
 
   const getCategories = async () => {
     setLoading(true); // start loading
@@ -45,18 +51,33 @@ export default function Category() {
     setLoading(false); // done loading
   };
 
+  const getAttributes = async () => {
+    let response = await getData("attributes");
+    if (response.status == 200) {
+      setAttributes(response.data.data);
+    }
+  };
+
   useEffect(() => {
     getCategories();
+    getAttributes();
   }, [page]);
 
   const handleClickOpen = async (id, modal) => {
     if (modal == "create") {
       setModalType("create");
+      setSelectedAttributes([]);
+      setCategoryName("");
+      setCategoryDescription("");
     } else if (modal == "update") {
       let response = await getData(`categories/${id}`);
       setCategoryName(response.data.name);
       setCategoryDescription(response.data.description);
+      console.log(response.data.attributes);
+      setSelectedAttributes(response.data.attributes);
+      console.log(attributes.filter(attr => response.data.attributes.includes(attr.id)));
       setModalType("update");
+
     } else {
       setModalType("delete");
     }
@@ -81,6 +102,9 @@ export default function Category() {
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
+    const selectedIds = selectedAttributes.map(attr => attr.id);
+    formdata.append("attributes", JSON.stringify(selectedIds));
+
 
     let response = await postData("categories", formdata);
 
@@ -104,6 +128,8 @@ export default function Category() {
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
+    const selectedIds = selectedAttributes.map(attr => attr.id);
+    formdata.append("attributes", JSON.stringify(selectedIds));
     let response = await postData(`categories/${requiredID}`, formdata);
     if (response.status == 200) {
       setCategoryName("");
@@ -164,6 +190,23 @@ export default function Category() {
                   placeholder="Category Name"
                 />
 
+                <Autocomplete
+                  style={{ marginTop: '16px' }}
+                  multiple
+                  options={attributes}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedAttributes}
+                  onChange={(e, newValue) => {
+                    setSelectedAttributes(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      placeholder="Pick some..."
+                    />
+                  )}
+                />
                 <input
                   onChange={(e) => setCategoryDescription(e.target.value)}
                   value={categoryDescription}
@@ -207,6 +250,24 @@ export default function Category() {
                   type="text"
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Name"
+                />
+
+                <Autocomplete
+                  style={{ marginTop: '16px' }}
+                  multiple
+                  options={attributes}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedAttributes}
+                  onChange={(e, newValue) => {
+                    setSelectedAttributes(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      placeholder="Pick some..."
+                    />
+                  )}
                 />
 
                 <input
@@ -313,12 +374,12 @@ export default function Category() {
       </div>
       <div className='flex justify-center'>
         <Stack spacing={2} className="flex justify-center mt-6">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => (setPage(value), console.log(value))} // updates state
-        />
-      </Stack>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, value) => (setPage(value), console.log(value))} // updates state
+          />
+        </Stack>
       </div>
     </div>
   );
