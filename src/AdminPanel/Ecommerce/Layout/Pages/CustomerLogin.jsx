@@ -22,7 +22,7 @@ import loginBg from "../../../../assets/img/william-pickard-UJz_2r73aAk-unsplash
 const CustomerLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    phone: "",
+    phone_number: "",
     password: "",
   });
   const navigate = useNavigate();
@@ -44,9 +44,9 @@ const CustomerLogin = () => {
   };
 
   const validateForm = () => {
-    const { name, email, phone, password, confirmPassword } = formData;
+    const { name, email, phone_number, password, confirmPassword } = formData;
    
-    if (!phone) {
+    if (!phone_number) {
       toast.warning("Phone is required");
       return false;
     }
@@ -62,9 +62,8 @@ const CustomerLogin = () => {
     e.preventDefault();
 
     if (validateForm()) {
-      let response = await postData("customers_login", formData);
-      console.log(response);
-      console.log(response.status);
+      let response = await postData("customers/login", formData);
+
       if (response.status) {
         const token = response.data.access_token;
         const user = response.data.customer;
@@ -95,8 +94,8 @@ const CustomerLogin = () => {
             <Phone className="absolute left-3 top-3 text-gray-400" />
             <input
               type="text"
-              name="phone"
-              value={formData.phone}
+              name="phone_number"
+              value={formData.phone_number}
               onChange={handleInputChange}
               placeholder="Phone"
               className="pl-10 w-full py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
