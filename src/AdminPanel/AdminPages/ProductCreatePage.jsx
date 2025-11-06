@@ -34,6 +34,7 @@ export default function ProductCreatePage() {
   const [attributeIds, setAttributeIds] = useState([]);
   const [attributes, setAttributes] = useState([]);
   const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   let [categories, setCategories] = useState([]);
@@ -71,8 +72,7 @@ export default function ProductCreatePage() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    console.log(files.length);
-    console.log(files);
+
     if (files.length > 6) {
       alert("You can only upload up to 6 images.");
       files.length = 0;
@@ -111,10 +111,6 @@ export default function ProductCreatePage() {
       toast.warning("Please select a category");
       return;
     }
-    if (attributeIds.length === 0) {
-      toast.warning("Please select at least one attribute");
-      return;
-    }
     if (images.length === 0) {
       toast.warning("Please upload at least one image");
       return;
@@ -130,9 +126,6 @@ export default function ProductCreatePage() {
     formData.append("description", description);
     formData.append("price", price);
     formData.append("category_id", category);
-    attributeIds.forEach((id) => formData.append("attributeIds[]", id));
-    images.forEach((image) => formData.append("images[]", image));
-
     let response = await postData("products", formData);
 
     if (response.status === 200) {
@@ -142,81 +135,12 @@ export default function ProductCreatePage() {
     }
   };
 
-  const createAttribute = async (e)=>{
-    e.preventDefault();
-    if (!attributename.trim()) {
-      toast.warning("Attribute name is required");
-      return;
-    }
-    if (!attributeDescription.trim()) {
-      toast.warning("Attribute description is required");
-      return;
-    }
-    let formdata = new FormData();
-    formdata.append("name", attributename);
-    formdata.append("description", attributeDescription);
-    let response = await postData("attributes", formdata);
-    if (response.status == 200) {
-      setAttributeName("");
-      setAttributeDescription("");
-      getAttributes();
-      handleClose();
-      toast.success("Attribute created successfully");
-      getAttributes();
-    }
-  }
+
 
   return (
     <div>
       {/* dialog */}
-        <Dialog
-        onClose={handleClose}
-        aria-labelledby="customized-dialog-title"
-        open={open}
-      >
-        <div className=" ">
-            <h1 className="text-xl font-bold text-center py-5">
-              Create New Attributes
-            </h1>
-            <DialogContent>
-              <DialogContentText>
-                To create a new category, please enter the category name here.
-              </DialogContentText>
-              <form onSubmit={createAttribute}>
-                <input
-                  onChange={(e) => setAttributeName(e.target.value)}
-                  value={attributename}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Name"
-                />
-
-                <input
-                  onChange={(e) => setAttributeDescription(e.target.value)}
-                  value={attributeDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Attribute Description"
-                />
-                <div className="text-center mt-5 ">
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                  >
-                    Submit
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose} color="primary">
-                Cancel
-              </Button>
-            </DialogActions>
-          </div>
-      </Dialog>
+     
       <form
         onSubmit={createProduct}
         className=" w-4/5 mx-auto my-10 px-40 py-5 rounded-lg shadow-lg"
@@ -228,8 +152,39 @@ export default function ProductCreatePage() {
           value={name}
           type="text"
           className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-          placeholder="Product Name"
+          placeholder="Product Name"fdasfdasffdasfjlllf
         />
+
+         <FormControl fullWidth sx={{ mt: 3 }}>
+          <InputLabel id="category-select-label">Category</InputLabel>
+          <Select
+            labelId="category-select-label"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </Select>fdasfdasffdasfjlllf
+        </FormControl>
+
+         <FormControl fullWidth sx={{ mt: 3 }}>
+          <InputLabel id="category-select-label">Brand</InputLabel>
+          <Select
+            labelId="category-select-label"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+          >
+            {categories.map((brand) => (
+              <MenuItem key={brand.id} value={brand.id}>
+                {brand.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
 
         <input
           onChange={(e) => setDescription(e.target.value)}
@@ -247,59 +202,8 @@ export default function ProductCreatePage() {
           placeholder="Price"
         />
 
-        <FormControl fullWidth sx={{ mt: 3 }}>
-          <InputLabel id="category-select-label">Category</InputLabel>
-          <Select
-            labelId="category-select-label"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {categories.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Attribute Dropdown */}
-        <div className="flex justify-between items-center text-center">
-          <Autocomplete
-            sx={{ mt: 3, mb: 3, width: "90%" }}
-            multiple
-            id="checkboxes-tags-demo"
-            options={attributes}
-            disableCloseOnSelect
-            getOptionLabel={(option) => option.name}
-            onChange={(event, value) => {
-              setAttributeIds(value.map((item) => item.id));
-            }}
-            renderOption={(props, option, { selected }) => {
-              const { key, ...optionProps } = props;
-              return (
-                <li key={key} {...optionProps}>
-                  <Checkbox
-                    icon={icon}
-                    checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
-                  />
-                  {option.name}
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Attributes"
-                placeholder="Select attributes"
-              />
-            )}
-          />
-          <div>
-            <AddCircleOutlineIcon onClick={handleClickOpen} className="text-gray-500 hover:text-blue-300 transform transition-transform duration-300 hover:scale-125" />
-          </div>
-        </div>
+       
+      
 
         <div className="flex flex-col gap-4 w-1/4">
           {/* Upload Button */}

@@ -56,6 +56,18 @@ export default function Sidebar({sidebarstatus,toggleSidebar}) {
             </li>
           </NavLink>
 
+          <NavLink 
+            to="/admin/brands" 
+            className={({ isActive }) => 
+              `block ${isActive ? "text-white bg-gray-800" : "text-gray-400"}`
+            }
+          >
+            <li className="text-center hover:text-gray-100 transition-all duration-300 border-transparent py-3">
+              <PersonIcon className="mr-5" />
+              <span className="w-1/5">Brand</span>
+            </li>
+          </NavLink>
+
           {/* Customer link with active state */}
           <NavLink 
             to="/admin/categories" 

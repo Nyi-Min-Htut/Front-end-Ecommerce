@@ -17,6 +17,7 @@ import OrderListPage from '../AdminPanel/Ecommerce/Layout/Pages/OrderlistPage';
 import OrderDetail from '../AdminPanel/Ecommerce/Layout/Pages/OrderDetailPage';
 import CustomerRegister from '../AdminPanel/Ecommerce/Layout/Pages/CustomerRegister';
 import CustomerLogin from '../AdminPanel/Ecommerce/Layout/Pages/CustomerLogin';
+import Brand from '../AdminPanel/AdminPages/Brand';
 
 const router = createBrowserRouter([
   {
@@ -73,7 +74,8 @@ const router = createBrowserRouter([
           { path: "products/create", element: <ProductCreatePage /> },
           { path: "products/:id/edit", element: <ProductEditPage /> },
           { path: "attributes", element: <Attribute /> },
-          { path: "roles", element: <Role /> }
+          { path: "roles", element: <Role /> },
+          { path: "brands", element: <Brand/> }
         ]
       }
     ]
