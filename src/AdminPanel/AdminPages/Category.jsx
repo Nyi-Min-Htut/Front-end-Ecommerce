@@ -20,6 +20,13 @@ import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutl
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import ListItemText from '@mui/material/ListItemText';
+import Select from '@mui/material/Select';
+import Checkbox from '@mui/material/Checkbox';
 
 export default function Category() {
   const [open, setOpen] = useState(false);
@@ -29,6 +36,7 @@ export default function Category() {
   const [modalType, setModalType] = useState("");
   const [name, setName] = useState("");
   const [categories, setCategories] = useState([]);
+  const [attributes, setAttributes] = useState([]);
   const [loading, setLoading] = useState(true); // initially loading
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -45,8 +53,43 @@ export default function Category() {
     setLoading(false); // done loading
   };
 
+  const getAttributes = async () => {
+    let response = await getData('attributes');
+
+    if (response.status === 200) {
+      setAttributes(response.data.data);
+    } else {
+      setAttributes([]);
+    }
+  }
+
+
+
+
+  const [attrValue, setAttrValue] = useState([]);
+  const handleChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setAttrValue(
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const MenuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250,
+      },
+    },
+  };
+
   useEffect(() => {
     getCategories();
+    getAttributes();
   }, [page]);
 
   const handleClickOpen = async (id, modal) => {
@@ -81,6 +124,7 @@ export default function Category() {
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
+    formdata.append('attribute_ids',JSON.stringify(attrValue));
 
     let response = await postData("categories", formdata);
 
@@ -125,6 +169,7 @@ export default function Category() {
     } else {
       toast.error("Error deleting category: " + response.error);
     }
+
   };
 
   return (
@@ -149,7 +194,7 @@ export default function Category() {
         {modalType === "create" && (
           <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
-              Create New Category
+              Create New Categorys
             </h1>
             <DialogContent>
               <DialogContentText>
@@ -163,6 +208,32 @@ export default function Category() {
                   className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Name"
                 />
+                <div>
+
+                  <FormControl sx={{ m: 1, width: 450 }}>
+                    <InputLabel id="demo-multiple-checkbox-label">Attributes</InputLabel>
+                    <Select
+                      labelId="demo-multiple-checkbox-label"
+                      id="demo-multiple-checkbox"
+                      multiple
+                      value={attrValue}
+                      onChange={handleChange}
+                      input={<OutlinedInput label="Tag" />}
+                      renderValue={(selected) =>
+                        selected.map(id => attributes.find(a => a.id === id)?.name).join(', ')
+                      }
+                      MenuProps={MenuProps}
+                    >
+                      {attributes.map((attribute) => (
+                        <MenuItem key={attribute.id} value={attribute.id}>
+                          <Checkbox checked={attrValue.includes(attribute.id)} />
+                          <ListItemText primary={attribute.name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                </div>
 
                 <input
                   onChange={(e) => setCategoryDescription(e.target.value)}
@@ -313,12 +384,12 @@ export default function Category() {
       </div>
       <div className='flex justify-center'>
         <Stack spacing={2} className="flex justify-center mt-6">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => (setPage(value), console.log(value))} // updates state
-        />
-      </Stack>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, value) => (setPage(value), console.log(value))} // updates state
+          />
+        </Stack>
       </div>
     </div>
   );

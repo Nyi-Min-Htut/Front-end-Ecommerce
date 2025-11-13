@@ -23,7 +23,7 @@ import { Pagination, Stack } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 
 export default function product() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [requiredID, setRequireID] = useState(null);
   const [modalType, setModalType] = useState("");
@@ -75,7 +75,7 @@ export default function product() {
     e.preventDefault();
     let formData = new FormData();
     formData.append("stock_quantity", stockValue);
-    let response = await postData(`products/${requiredID}`,formData);
+    let response = await postData(`products/${requiredID}`, formData);
     if (response.status === 200) {
       toast.success("Stock Quantity updated successfully");
       getproducts();
@@ -91,7 +91,7 @@ export default function product() {
         className="flex justify-between mx-10 my-5"
         title="Create New product "
       >
-        <h1 className="text-xl font-bold">product List</h1>
+        <h1 className="text-xl font-bold">Product List</h1>
         <AddBoxIcon
           fontSize="large"
           onClick={() => {
@@ -121,17 +121,17 @@ export default function product() {
           </div>
         )}
         {modalType === "updateStock" && (
-         <div className=" ">
+          <div className=" ">
             <h1 className="text-xl font-bold text-center py-5">
               Stock Quantity Update
             </h1>
             <DialogContent>
               <DialogContentText>
-               To increase the stock quantity, please enter a positive number.
+                To increase the stock quantity, please enter a positive number.
               </DialogContentText>
               <form onSubmit={StockQuantityUpdate}>
                 <input
-                  onChange={(e) =>setStockValue(e.target.value)}
+                  onChange={(e) => setStockValue(e.target.value)}
                   value={stockValue}
                   type="number"
                   className=" w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
@@ -167,23 +167,27 @@ export default function product() {
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">Name</h1>
                 </TableCell>
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Code</h1>
-                </TableCell>
+
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">Description</h1>
+                </TableCell>
+                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <h1 className="text-sm font-semibold">Category</h1>
+                </TableCell>
+                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <h1 className="text-sm font-semibold">Brand</h1>
                 </TableCell>
 
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">Price</h1>
                 </TableCell>
 
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Category</h1>
-                </TableCell>
 
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Stock Quantity</h1>
+                  <h1 className="text-sm font-semibold">Total Stock</h1>
+                </TableCell>
+                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <h1 className="text-sm font-semibold">Img</h1>
                 </TableCell>
 
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
@@ -198,82 +202,95 @@ export default function product() {
                     Loading products...
                   </TableCell>
                 </TableRow>
-              ):
-              products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
-                    No products found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow
-                  
-                    key={product.id}
-                    hover
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    className='cursor-pointer'
-                  >
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      align="center"
-                      sx={{ px: 1, py: 1.5 }}
-                    >
-                      {product.name}
-                    </TableCell>
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {product.product_code}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {product.description || "No description available"}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {product.price }
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {product.category.name}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {product.stock_quantity}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      <AddIcon
-                      onClick={() => handleClickOpen(product.id, "updateStock")}
-                        className="cursor-pointer text-blue-500 hover:text-blue-700"
-                      />
-                      <ModeEditOutlineOutlinedIcon
-                        onClick={() => {
-                          navigate(`/admin/products/${product.id}/edit`);
-                        }}
-                        className="cursor-pointer text-green-500 hover:text-green-700 ml-2"
-                      />
-                      
-                      <DeleteOutlineOutlinedIcon
-                        onClick={() => handleClickOpen(product.id, "delete")}
-                        className="cursor-pointer text-red-500 hover:text-red-700 ml-2"
-                      />
+              ) :
+                products.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
+                      No products found.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ) : (
+                  products.map((product) => (
+                    <TableRow
+
+                      key={product.id}
+                      hover
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                      className='cursor-pointer'
+                    >
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        align="center"
+                        sx={{ px: 1, py: 1.5 }}
+                      >
+                        {product.name}
+                      </TableCell>
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        {product.description}
+                      </TableCell>
+
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        {product.category.name}
+                      </TableCell>
+
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        {product.brand.name}
+                      </TableCell>
+
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        {product.price}
+                      </TableCell>
+
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        99
+                      </TableCell>
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        <img
+                          src={product.product_images[0].image_url}
+                          alt={product.name}
+                          style={{
+                            width: 60,
+                            height: 60,
+                            objectFit: "cover",
+                            borderRadius: "6px",
+                          }}
+                          onError={(e) => (e.target.style.display = "none")} // hide broken img icons
+                        />
+                      </TableCell>
+
+                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        <AddIcon
+                          onClick={() => handleClickOpen(product.id, "updateStock")}
+                          className="cursor-pointer text-blue-500 hover:text-blue-700"
+                        />
+                        <ModeEditOutlineOutlinedIcon
+                          onClick={() => {
+                            navigate(`/admin/products/${product.id}/edit`);
+                          }}
+                          className="cursor-pointer text-green-500 hover:text-green-700 ml-2"
+                        />
+
+                        <DeleteOutlineOutlinedIcon
+                          onClick={() => handleClickOpen(product.id, "delete")}
+                          className="cursor-pointer text-red-500 hover:text-red-700 ml-2"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
             </TableBody>
           </Table>
         </TableContainer>
       </div>
       <div className='flex justify-center'>
         <Stack spacing={2} className="flex justify-center mt-6">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => (setPage(value), console.log(value))} 
-        />
-      </Stack>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, value) => (setPage(value), console.log(value))}
+          />
+        </Stack>
       </div>
     </div>
   );

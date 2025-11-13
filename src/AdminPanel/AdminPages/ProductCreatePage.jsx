@@ -56,32 +56,31 @@ export default function ProductCreatePage() {
       setCategories(response.data.data);
     }
   };
-
-  const getAttributes = async () => {
-    let response = await getData("attributes");
+  const [brands, setBrands] = useState([]);
+  const getBrands = async () => {
+    let response = await getData("brands");
     if (response.status === 200) {
-      setAttributes(response.data.data);
-      console.log(response.data.data);
+      setBrands(response.data.data);
     }
   };
 
   useEffect(() => {
     getCategory();
-    getAttributes();
+    getBrands();
   }, []);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
 
-    if (files.length > 6) {
-      alert("You can only upload up to 6 images.");
-      files.length = 0;
-      return;
-    } else {
+    // if (files.length > 6) {
+    //   alert("You can only upload up to 6 images.");
+    //   files.length = 0;
+    //   return;
+    // } else {
       setImages(files);
       const previewUrls = files.map((file) => URL.createObjectURL(file));
       setPreviews(previewUrls);
-    }
+    
   };
   const handleRemoveImage = (index) => {
     const newImages = [...images];
@@ -115,17 +114,16 @@ export default function ProductCreatePage() {
       toast.warning("Please upload at least one image");
       return;
     }
-    if (images.length > 6) {
-      toast.warning("You can upload a maximum of 6 images");
-      return;
-    }
+    
 
     // Build FormData
     let formData = new FormData();
+    formData.append("product_main_img",images[0]);
     formData.append("name", name);
     formData.append("description", description);
     formData.append("price", price);
     formData.append("category_id", category);
+    formData.append('brand_id', brand);
     let response = await postData("products", formData);
 
     if (response.status === 200) {
@@ -152,7 +150,7 @@ export default function ProductCreatePage() {
           value={name}
           type="text"
           className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-          placeholder="Product Name"fdasfdasffdasfjlllf
+          placeholder="Product Name"
         />
 
          <FormControl fullWidth sx={{ mt: 3 }}>
@@ -167,7 +165,7 @@ export default function ProductCreatePage() {
                 {c.name}
               </MenuItem>
             ))}
-          </Select>fdasfdasffdasfjlllf
+          </Select>
         </FormControl>
 
          <FormControl fullWidth sx={{ mt: 3 }}>
@@ -177,7 +175,7 @@ export default function ProductCreatePage() {
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
           >
-            {categories.map((brand) => (
+            {brands.map((brand) => (
               <MenuItem key={brand.id} value={brand.id}>
                 {brand.name}
               </MenuItem>
