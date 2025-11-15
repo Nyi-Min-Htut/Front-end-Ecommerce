@@ -21,6 +21,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import { useNavigate } from 'react-router-dom';
 import { Pagination, Stack } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 export default function product() {
   const navigate = useNavigate();
@@ -260,6 +261,11 @@ export default function product() {
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+
+                        <InfoOutlinedIcon
+                        onClick={()=>navigate(`/admin/products_variations_create/${product.id}`)}
+                        className="cursor-pointer text-yellow-500 hover:text-yellow-700"
+                        />
                         <AddIcon
                           onClick={() => handleClickOpen(product.id, "updateStock")}
                           className="cursor-pointer text-blue-500 hover:text-blue-700"

@@ -3,6 +3,7 @@ import Layout from '../AdminPanel/Layout';
 import Category from '../AdminPanel/AdminPages/Category';
 import Employee from '../AdminPanel/AdminPages/Employee';
 import Product from '../AdminPanel/AdminPages/Product';
+import ProductVariation from '../AdminPanel/AdminPages/ProductVariation';
 import ProductCreatePage from '../AdminPanel/AdminPages/ProductCreatePage';
 import Attribute from '../AdminPanel/AdminPages/Attribute';
 import Role from '../AdminPanel/AdminPages/Role';
@@ -71,6 +72,7 @@ const router = createBrowserRouter([
           { path: "employees/create", element: <EmployeeCreate /> },
           { path: "categories", element: <Category /> },
           { path: "products", element: <Product /> },
+          {path: "products_variations_create/:id", element: <ProductVariation/>},
           { path: "products/create", element: <ProductCreatePage /> },
           { path: "products/:id/edit", element: <ProductEditPage /> },
           { path: "attributes", element: <Attribute /> },
