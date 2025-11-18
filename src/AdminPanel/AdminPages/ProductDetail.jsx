@@ -26,66 +26,31 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 export default function product() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [requiredID, setRequireID] = useState(null);
-  const [modalType, setModalType] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [products, setproducts] = useState([]);
-  const [stockValue, setStockValue] = useState('');
-  const [loading, setLoading] = useState(true); // initially loading
-
-  const getproducts = async () => {
-    setLoading(true);
-    let response = await getData("products");
-    if (response.status === 200) {
-      setproducts(response.data.data);
-      setTotalPages(response.data.last_page);
-    }
-    setLoading(false);
-  };
-
+    const [products, setProduct] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [variants, setVariants] = useState([]);
+  
+    const getProductDetail = async (id) => {
+      let response = await getData("products/" + id);
+      if (response.status === 200) {
+        setProduct(response.data);
+        setVariants(response.data.product_variants);
+  
+        // setVariants(response.data.data.product_variants || []);
+  
+        let attrRes = await getData(`categories/${response.data.category_id}/attributes`);
+        if (attrRes.status === 200) {
+          setAttributes(attrRes.data);
+        }
+      }
+    };
+  
   useEffect(() => {
-    getproducts();
+    getProductDetail();
   }, []);
 
-  const handleClickOpen = async (id, modal) => {
-    setModalType(modal);
-    if (id != null) {
-      setRequireID(id);
-    }
-
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleDelete = async () => {
-    let response = await deleteData(`products/${requiredID}`);
-    if (response.status === 200) {
-      toast.success("product deleted successfully");
-      getproducts();
-      handleClose();
-    } else {
-      toast.error("Error deleting product: " + response.error);
-    }
-  };
-
-  const StockQuantityUpdate = async (e) => {
-    e.preventDefault();
-    let formData = new FormData();
-    formData.append("stock_quantity", stockValue);
-    let response = await postData(`products/${requiredID}`, formData);
-    if (response.status === 200) {
-      toast.success("Stock Quantity updated successfully");
-      getproducts();
-      handleClose();
-      setStockValue('');
-    } else {
-      toast.error("Error updating Stock Quantity: " + response.error);
-    }
-  };
   return (
     <div>
       <div
@@ -263,7 +228,7 @@ export default function product() {
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
 
                         <InfoOutlinedIcon
-                        onClick={()=>navigate(`/admin/products/${product.id}/details`)}
+                        onClick={()=>navigate(`/admin/  /${product.id}`)}
                         className="cursor-pointer text-yellow-500 hover:text-yellow-700"
                         />
                         <AddIcon

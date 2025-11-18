@@ -8,6 +8,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { toast } from "react-toastify";
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import ClearIcon from '@mui/icons-material/Clear';
 import {
   Table,
   TableBody,
@@ -49,18 +50,20 @@ export default function ProductCreatePage() {
   const [previews, setPreviews] = useState([]);
   const [attr, setAttr] = useState({});
   const [stock, setStock] = useState("");
-
+  const [price, setPrice] = useState("");
+  const [variants, setVariants] = useState([]);
   const { id } = useParams();
 
   const getProductDetail = async (id) => {
     let response = await getData("products/" + id);
-    console.log(response.data);
     if (response.status === 200) {
-      setProduct(response.data.data);
+      setProduct(response.data);
+      setVariants(response.data.product_variants);
+
+      // setVariants(response.data.data.product_variants || []);
 
       let attrRes = await getData(`categories/${response.data.category_id}/attributes`);
       if (attrRes.status === 200) {
-        console.log(attrRes.data);
         setAttributes(attrRes.data);
       }
     }
@@ -94,51 +97,31 @@ export default function ProductCreatePage() {
     setVariantImages(newImages);
     setVariantPreviews(newPreviews);
   };
-  const [variants, setVariants] = useState([]);
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name || !stock) {
-      toast.warning("Please fill in all required fields.");
-      return;
-    }
 
-    const newVariant = {
-      name,
-      stock,
-      description,
-      ...attr,                // dynamic attributes
-      images: variantImages,  // array of files
-    };
+  const handleSubmit = async(e) => {
+    e.preventDefault()
+    let formData = new FormData();
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("stock", stock);
+    formData.append("price", price);
+    formData.append('attributes', JSON.stringify(attr));
+    variantImages.forEach((file, index) => {
+      formData.append(`images[${index}]`, file);
+    });
 
-    // Add new variant to the variants array
-    setVariants((prev) => [...prev, newVariant]);
+    let response = await postData('products/'+id+'/variants', formData);
 
-    // Clear form for next variant
-    setName("");
-    setStock("");
-    setDescription("");
-    setAttr({});
-    setVariantImages([]);
-    setVariantPreviews([]);
-  };
-
-  const handleProductVariantsSubmit = async () => {
-    if (variants.length === 0) {
-      toast.warning("Please add at least one variant.");
-      return;
-    }
-    const payload = {
-      product_id: id,
-      variants: variants,
-    };
-    let response = await postData("products/variations", payload);
-    if (response.status === 201) {
-      toast.success("Product variants added successfully!");
-      navigate("/admin/products");
-    } else {
-      toast.error("Failed to add product variants.");
+    if(response.status === 200){
+      toast.success("Product Variation added successfully");
+      navigate('/admin/products');
+    }else{
+      toast.error("Error adding product variation");
     }
   }
+
+
+
   return (
     <div>
       {/* dialog */}
@@ -159,10 +142,18 @@ export default function ProductCreatePage() {
         />
 
         <input
-          onChange={(e) => setStock(e.target.value)}
-          type="text"
-          value={stock}
+          onChange={(e) => setPrice(e.target.value)}
+          type="number"
+          value={price}
 
+          className="w-full py-3 px-4 mt-5 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+          placeholder="Price"
+        />
+
+        <input
+          onChange={(e) => setStock(e.target.value)}
+          type="number"
+          value={stock}
           className="w-full py-3 px-4 mt-5 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
           placeholder="Stock quantity"
         />
@@ -191,19 +182,17 @@ export default function ProductCreatePage() {
           />
         ))}
 
-        <div>
-          <Button
-            sx={{ mt: 4 }}
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-          >
-            Add Product Variants
+        <label htmlFor="upload-images">
+          <Button component="span">
+            Upload Images
           </Button>
-        </div>
+        </label>
 
-        <div className="flex flex-col gap-4 w-1/4">
+
+
+
+
+        <div className="flex flex-col gap-4 w-full">
           {/* Upload Button */}
           <input
             accept="image/*"
@@ -213,18 +202,13 @@ export default function ProductCreatePage() {
             style={{ display: "none" }}
             onChange={handleImageChange}
           />
-          <label htmlFor="upload-images">
-            <Button component="span">
-              Upload Images
-            </Button>
-          </label>
+
 
           {/* Previews */}
-          {previews.length > 0 && (
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              {previews.map((src, idx) => (
+          {variantPreviews.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 gap-4 w-full">
+              {variantPreviews.map((src, idx) => (
                 <div className="relative w-32 h-32" key={idx}>
-                  {/* Remove button */}
                   <span
                     onClick={() => handleRemoveImage(idx)}
                     className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center cursor-pointer text-xs z-10"
@@ -232,7 +216,6 @@ export default function ProductCreatePage() {
                     x
                   </span>
 
-                  {/* Image */}
                   <img
                     src={src}
                     alt={`preview-${idx}`}
@@ -242,6 +225,17 @@ export default function ProductCreatePage() {
               ))}
             </div>
           )}
+
+          <Button
+            variant="contained"
+            className="w-full"
+            type="submit"
+          >
+            Apply
+          </Button>
+
+
+
         </div>
       </form>
 
@@ -254,10 +248,10 @@ export default function ProductCreatePage() {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Stock</TableCell>
-              <TableCell>Description</TableCell>
-              {attributes.map((a) => (
-                <TableCell key={a.id}>{a.name}</TableCell>
-              ))}
+              <TableCell>Price</TableCell>
+              <TableCell>Images</TableCell>
+
+              <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -265,20 +259,29 @@ export default function ProductCreatePage() {
               <TableRow key={index}>
                 <TableCell>{variant.name}</TableCell>
                 <TableCell>{variant.stock}</TableCell>
-                <TableCell>{variant.description}</TableCell>
-                {attributes.map((a) => (
-                  <TableCell key={a.id}>{variant[a.id] || "-"}</TableCell>
-                ))}
+                <TableCell>{variant.price}</TableCell>
+          
                 <TableCell>
-                  {variant.images && variant.images.map((file, i) => (
+                  {variant.product_images && variant.product_images.map((img, i) => (
                     <img
                       key={i}
-                      src={URL.createObjectURL(file)}
+                      src={img.image_url}
                       alt={`variant-${index}-img-${i}`}
                       width={50}
                       style={{ marginRight: 5 }}
                     />
                   ))}
+                </TableCell>
+                <TableCell>
+                  <ClearIcon
+                    className='text-red-200 hover:text-red-600'
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      const newVariants = [...variants];
+                      newVariants.splice(index, 1);
+                      setVariants(newVariants);
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -287,17 +290,7 @@ export default function ProductCreatePage() {
         </Table>
       </TableContainer>
 
-      <div>
-        <Button
-          onClick={handleProductVariantsSubmit}
-          sx={{ mt: 4 }}
-          fullWidth
-          variant="contained"
-          color="primary"
-        >
-          Add Product Variants
-        </Button>
-      </div>
+
 
     </div>
   );

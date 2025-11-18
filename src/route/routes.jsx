@@ -73,6 +73,7 @@ const router = createBrowserRouter([
           { path: "categories", element: <Category /> },
           { path: "products", element: <Product /> },
           {path: "products_variations_create/:id", element: <ProductVariation/>},
+          {path: "products/:id/details",element: <ProductDetail/>},
           { path: "products/create", element: <ProductCreatePage /> },
           { path: "products/:id/edit", element: <ProductEditPage /> },
           { path: "attributes", element: <Attribute /> },
