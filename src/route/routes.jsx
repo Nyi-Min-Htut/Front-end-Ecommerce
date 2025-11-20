@@ -14,11 +14,14 @@ import ProtectedRoute from '../AdminPanel/AdminPages/ProtectedRoute';
 import HomePageLayout from '../AdminPanel/Ecommerce/Layout/HomePageLayout';
 import HomePage from '../AdminPanel/Ecommerce/Layout/Pages/HomePage';
 import ProductDetail from '../AdminPanel/Ecommerce/Layout/Pages/ProductDetail';
+import ProductDetailAP from '../AdminPanel/AdminPages/ProductDetailAP';
 import OrderListPage from '../AdminPanel/Ecommerce/Layout/Pages/OrderlistPage';
 import OrderDetail from '../AdminPanel/Ecommerce/Layout/Pages/OrderDetailPage';
 import CustomerRegister from '../AdminPanel/Ecommerce/Layout/Pages/CustomerRegister';
 import CustomerLogin from '../AdminPanel/Ecommerce/Layout/Pages/CustomerLogin';
 import Brand from '../AdminPanel/AdminPages/Brand';
+import VariantEdit from '../AdminPanel/AdminPages/VariantEdit';
+import EmployeeEditPage from '../AdminPanel/AdminPages/EmployeeEdit';
 
 const router = createBrowserRouter([
   {
@@ -70,10 +73,12 @@ const router = createBrowserRouter([
         children: [
           { path: "employees", element: <Employee /> },
           { path: "employees/create", element: <EmployeeCreate /> },
+          { path: "employees/:id/edit",element: <EmployeeEditPage/>},
           { path: "categories", element: <Category /> },
           { path: "products", element: <Product /> },
           {path: "products_variations_create/:id", element: <ProductVariation/>},
-          {path: "products/:id/details",element: <ProductDetail/>},
+          {path: "variants/:id/edit", element: <VariantEdit/>},
+          {path: "products/:id/details",element: <ProductDetailAP/>},
           { path: "products/create", element: <ProductCreatePage /> },
           { path: "products/:id/edit", element: <ProductEditPage /> },
           { path: "attributes", element: <Attribute /> },

@@ -21,37 +21,37 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import { useNavigate } from 'react-router-dom';
 import { Pagination, Stack } from "@mui/material";
 
-export default function employee() {
+export default function Employee() { // Fixed component name to start with capital
     const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [requiredID, setRequireID] = useState(null);
   const [modalType, setModalType] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [employees, setemployees] = useState([]);
-  const [stockValue, setStockValue] = useState('');
-  const [loading, setLoading] = useState(true); // initially loading
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const getemployees = async () => {
+  const getEmployees = async () => {
     setLoading(true);
-    let response = await getData("employees");
+    let response = await getData("employees?page=" + page); // Added pagination
     if (response.status === 200) {
-      setemployees(response.data.data);
-      setTotalPages(response.data.last_page);
+      setEmployees(response.data.data);
+      setTotalPages(response.data.meta?.last_page || response.data.last_page || 1);
+    } else {
+      setEmployees([]);
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    getemployees();
-  }, []);
+    getEmployees();
+  }, [page]); // Added page dependency
 
   const handleClickOpen = async (id, modal) => {
     setModalType(modal);
     if (id != null) {
       setRequireID(id);
     }
-
     setOpen(true);
   };
 
@@ -60,35 +60,59 @@ export default function employee() {
   };
 
   const handleDelete = async () => {
-    let response = await deleteData(`employees/${requiredID}`);
-    if (response.status === 200) {
-      toast.success("employee deleted successfully");
-      getemployees();
-      handleClose();
-    } else {
-      toast.error("Error deleting employee: " + response.error);
+    try {
+      let response = await deleteData(`employees/${requiredID}`);
+      if (response.status === 200) {
+        toast.success("Employee deleted successfully");
+        getEmployees();
+        handleClose();
+      } else {
+        toast.error("Error deleting employee: " + response.message);
+      }
+    } catch (error) {
+      toast.error("Error deleting employee");
     }
   };
 
-  const StockQuantityUpdate = async (e) => {
-    e.preventDefault();
-    let formData = new FormData();
-    formData.append("stock_quantity", stockValue);
-    let response = await postData(`employees/${requiredID}`,formData);
-    if (response.status === 200) {
-      toast.success("Stock Quantity updated successfully");
-      getemployees();
-      handleClose();
-      setStockValue('');
-    } else {
-      toast.error("Error updating Stock Quantity: " + response.error);
+  const handleBanToggle = async (employeeId, currentStatus) => {
+    try {
+      const formData = new FormData();
+      formData.append("is_ban", !currentStatus);
+
+      let response = await postData(`employees/${employeeId}/ban`, formData);
+      if (response.status === 200) {
+        toast.success(`Employee ${!currentStatus ? 'banned' : 'unbanned'} successfully`);
+        getEmployees();
+      } else {
+        toast.error("Error updating employee status");
+      }
+    } catch (error) {
+      toast.error("Error updating employee status");
     }
   };
+
+  const handleVerifyToggle = async (employeeId, currentStatus) => {
+    try {
+      const formData = new FormData();
+      formData.append("is_verified", !currentStatus);
+
+      let response = await postData(`employees/${employeeId}/verify`, formData);
+      if (response.status === 200) {
+        toast.success(`Employee ${!currentStatus ? 'verified' : 'unverified'} successfully`);
+        getEmployees();
+      } else {
+        toast.error("Error updating employee verification status");
+      }
+    } catch (error) {
+      toast.error("Error updating employee verification status");
+    }
+  };
+
   return (
     <div>
       <div
         className="flex justify-between mx-10 my-5"
-        title="Create New employee "
+        title="Create New Employee"
       >
         <h1 className="text-xl font-bold">Employee List</h1>
         <AddBoxIcon
@@ -100,58 +124,20 @@ export default function employee() {
         />
       </div>
 
-      {/* create/update/delete */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={open} onClose={handleClose}>
         {modalType === "delete" && (
           <div>
-            <DialogTitle id="alert-dialog-title"></DialogTitle>
-            <DialogContent>
-              <DialogContentText id="alert-dialog-description">
-                Are you sure you want to delete this employee? This action cannot
-                be undone.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Disagree</Button>
-              <Button onClick={handleDelete} autoFocus>
-                Agree
-              </Button>
-            </DialogActions>
-          </div>
-        )}
-        {modalType === "updateStock" && (
-         <div className=" ">
-            <h1 className="text-xl font-bold text-center py-5">
-              Stock Quantity Update
-            </h1>
+            <DialogTitle>Confirm Delete</DialogTitle>
             <DialogContent>
               <DialogContentText>
-               To increase the stock quantity, please enter a positive number.
+                Are you sure you want to delete this employee? This action cannot be undone.
               </DialogContentText>
-              <form onSubmit={StockQuantityUpdate}>
-                <input
-                  onChange={(e) =>setStockValue(e.target.value)}
-                  value={stockValue}
-                  type="number"
-                  className=" w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-                  placeholder="Stock Quantity Number"
-                />
-
-                <div className="text-center mt-5 ">
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                  >
-                    Update
-                  </Button>
-                </div>
-              </form>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose} color="primary">
-                Cancel
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleDelete} color="error" autoFocus>
+                Delete
               </Button>
             </DialogActions>
           </div>
@@ -163,42 +149,35 @@ export default function employee() {
           <Table aria-label="employees table" size="small">
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Name</h1>
-                </TableCell>
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Email</h1>
-                </TableCell>
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Phone</h1>
-                </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Role</h1>
-                </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Date of Birth</h1>
-                </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Address</h1>
-                </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Remark</h1>
-                </TableCell>
-
-                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Gender</h1>
-                </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                <TableCell align="center">
                   <h1 className="text-sm font-semibold">Image</h1>
                 </TableCell>
-
-                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                  <h1 className="text-sm font-semibold">Verify</h1>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Name</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Email</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Phone</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Role</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Date of Birth</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Gender</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Verified</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Status</h1>
+                </TableCell>
+                <TableCell align="center">
+                  <h1 className="text-sm font-semibold">Actions</h1>
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -209,77 +188,87 @@ export default function employee() {
                     Loading employees...
                   </TableCell>
                 </TableRow>
-              ):
-              employees.length === 0 ? (
+              ) : employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 1 }}>
+                  <TableCell colSpan={10} align="center">
                     No employees found.
                   </TableCell>
                 </TableRow>
               ) : (
                 employees.map((employee) => (
-                  <TableRow
-                    
-                    key={employee.id}
-                    hover
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    className='cursor-pointer'
-                  >
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      align="center"
-                      sx={{ px: 1, py: 1.5 }}
-                    >
-                      {employee.name}
-                    </TableCell>
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.email}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.phone || "No description available"}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.role.name }
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.dob}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.address}
-                    </TableCell>
-
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.remark}
-                    </TableCell>
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.gender}
-                    </TableCell>
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <TableRow key={employee.id} hover>
+                    {/* Image */}
+                    <TableCell align="center">
                       <div className='flex justify-center items-center'>
                         <img
-                          className='w-12 h-12  rounded-full object-cover'
-                          src={employee.image_url}
-                          alt=""
+                          className='w-12 h-12 rounded-full object-cover'
+                          src={employee.image_url || '/default-avatar.png'}
+                          alt={employee.name}
+                          onError={(e) => {
+                            e.target.src = '/default-avatar.png';
+                          }}
                         />
                       </div>
                     </TableCell>
 
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                      {employee.is_verified ? (
-                        <span className="text-green-600 font-semibold">Yes</span>
-                      ) : (
-                        <span className="text-red-600 font-semibold">No</span>
-                      )}
+                    {/* Name */}
+                    <TableCell align="center">
+                      {employee.name}
                     </TableCell>
 
-                    <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                    {/* Email */}
+                    <TableCell align="center">
+                      {employee.email}
+                    </TableCell>
+
+                    {/* Phone - Updated field name */}
+                    <TableCell align="center">
+                      {employee.phone_number || "N/A"}
+                    </TableCell>
+
+                    {/* Role */}
+                    <TableCell align="center">
+                      {employee.role?.name || "N/A"}
+                    </TableCell>
+
+                    {/* Date of Birth - Updated field name */}
+                    <TableCell align="center">
+                      {employee.dob || "N/A"}
+                    </TableCell>
+
+                    {/* Gender */}
+                    <TableCell align="center">
+                      {employee.gender ? employee.gender.charAt(0).toUpperCase() + employee.gender.slice(1) : "N/A"}
+                    </TableCell>
+
+                    {/* Verification Status with Toggle */}
+                    <TableCell align="center">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color={employee.is_verified ? "success" : "warning"}
+                        onClick={() => handleVerifyToggle(employee.id, employee.is_verified)}
+                      >
+                        {employee.is_verified ? "Verified" : "Unverified"}
+                      </Button>
+                    </TableCell>
+
+                    {/* Ban Status with Toggle */}
+                    <TableCell align="center">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        color={employee.is_ban ? "error" : "success"}
+                        onClick={() => handleBanToggle(employee.id, employee.is_ban)}
+                      >
+                        {employee.is_ban ? "Banned" : "Active"}
+                      </Button>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell align="center">
                       <ModeEditOutlineOutlinedIcon
-                        onClick={()=>navigate(`/admin/employees/${employee.id}/edit`)}
+                        onClick={() => navigate(`/admin/employees/${employee.id}/edit`)}
                         className="cursor-pointer text-green-500 hover:text-green-700"
                       />
                       <DeleteOutlineOutlinedIcon
@@ -294,15 +283,19 @@ export default function employee() {
           </Table>
         </TableContainer>
       </div>
-      <div className='flex justify-center'>
-        <Stack spacing={2} className="flex justify-center mt-6">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => (setPage(value), console.log(value))} 
-        />
-      </Stack>
-      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className='flex justify-center mt-6'>
+          <Stack spacing={2}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(e, value) => setPage(value)}
+            />
+          </Stack>
+        </div>
+      )}
     </div>
   );
 }

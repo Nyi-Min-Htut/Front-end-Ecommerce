@@ -37,25 +37,25 @@ export default function Category() {
   const [name, setName] = useState("");
   const [categories, setCategories] = useState([]);
   const [attributes, setAttributes] = useState([]);
-  const [loading, setLoading] = useState(true); // initially loading
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [attrValue, setAttrValue] = useState([]);
 
   const getCategories = async () => {
-    setLoading(true); // start loading
+    setLoading(true);
     let response = await getData("categories?page=" + page);
     if (response.status === 200) {
       setCategories(response.data.data);
       setTotalPages(response.data.data.last_page);
     } else {
-      setCategories([]); // handle error by emptying array
+      setCategories([]);
     }
-    setLoading(false); // done loading
+    setLoading(false);
   };
 
   const getAttributes = async () => {
     let response = await getData('attributes');
-
     if (response.status === 200) {
       setAttributes(response.data.data);
     } else {
@@ -63,11 +63,7 @@ export default function Category() {
     }
   }
 
-
-
-
-  const [attrValue, setAttrValue] = useState([]);
-  const handleChange = (event) => {
+  const handleAttributeChange = (event) => {
     const {
       target: { value },
     } = event;
@@ -93,25 +89,45 @@ export default function Category() {
   }, [page]);
 
   const handleClickOpen = async (id, modal) => {
-    if (modal == "create") {
+    // Reset form when opening any modal
+    setCategoryName("");
+    setCategoryDescription("");
+    setAttrValue([]);
+
+    if (modal === "create") {
       setModalType("create");
-    } else if (modal == "update") {
-      let response = await getData(`categories/${id}`);
-      setCategoryName(response.data.name);
-      setCategoryDescription(response.data.description);
-      setModalType("update");
+    } else if (modal === "update") {
+        let response = await getData(`categories/${id}`);
+        if (response.status === 200) {
+          const category = response.data;
+          setCategoryName(category.name);
+          setCategoryDescription(category.description);
+          
+          // Pre-select existing attributes for update
+          if (category.attributes && category.attributes.length > 0) {
+            const existingAttributeIds = category.attributes.map(attr => attr.id);
+            setAttrValue(existingAttributeIds);
+          }
+          
+          setModalType("update");
+        }
+     
     } else {
       setModalType("delete");
     }
+    
     if (id != null) {
       setRequireID(id);
     }
-
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
+    // Reset form when closing modal
+    setCategoryName("");
+    setCategoryDescription("");
+    setAttrValue([]);
   };
 
   const handleSubmit = async (event) => {
@@ -121,21 +137,20 @@ export default function Category() {
       toast.error("Please fill in all fields");
       return;
     }
+    
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
-    formdata.append('attribute_ids',JSON.stringify(attrValue));
+    formdata.append('attribute_ids', JSON.stringify(attrValue));
 
     let response = await postData("categories", formdata);
 
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
       getCategories();
       handleClose();
       toast.success("Category created successfully");
     } else {
-      alert("Error creating category: " + response.error);
+      toast.error("Error creating category: " + response.error);
     }
   };
 
@@ -145,18 +160,19 @@ export default function Category() {
       toast.error("Please fill in all fields");
       return;
     }
+    
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
+    formdata.append('attribute_ids', JSON.stringify(attrValue));
+
     let response = await postData(`categories/${requiredID}`, formdata);
     if (response.status == 200) {
-      setCategoryName("");
-      setCategoryDescription("");
       getCategories();
       handleClose();
       toast.success("Category updated successfully");
     } else {
-      alert("Error updating category: " + response.error);
+      toast.error("Error updating category: " + response.error);
     }
   };
 
@@ -169,7 +185,6 @@ export default function Category() {
     } else {
       toast.error("Error deleting category: " + response.error);
     }
-
   };
 
   return (
@@ -190,66 +205,64 @@ export default function Category() {
       </div>
 
       {/* create/update/delete */}
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         {modalType === "create" && (
-          <div className=" ">
+          <div>
             <h1 className="text-xl font-bold text-center py-5">
-              Create New Categorys
+              Create New Category
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                To create a new category, please enter the category details below.
               </DialogContentText>
               <form onSubmit={handleSubmit}>
                 <input
                   onChange={(e) => setCategoryName(e.target.value)}
                   value={categoryName}
                   type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  className="w-full py-3 px-4 mt-4 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Name"
+                  required
                 />
-                <div>
+                
+                <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+                  <InputLabel id="create-attributes-label">Attributes</InputLabel>
+                  <Select
+                    labelId="create-attributes-label"
+                    multiple
+                    value={attrValue}
+                    onChange={handleAttributeChange}
+                    input={<OutlinedInput label="Attributes" />}
+                    renderValue={(selected) =>
+                      selected.map(id => attributes.find(a => a.id === id)?.name).join(', ')
+                    }
+                    MenuProps={MenuProps}
+                  >
+                    {attributes.map((attribute) => (
+                      <MenuItem key={attribute.id} value={attribute.id}>
+                        <Checkbox checked={attrValue.includes(attribute.id)} />
+                        <ListItemText primary={attribute.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-                  <FormControl sx={{ m: 1, width: 450 }}>
-                    <InputLabel id="demo-multiple-checkbox-label">Attributes</InputLabel>
-                    <Select
-                      labelId="demo-multiple-checkbox-label"
-                      id="demo-multiple-checkbox"
-                      multiple
-                      value={attrValue}
-                      onChange={handleChange}
-                      input={<OutlinedInput label="Tag" />}
-                      renderValue={(selected) =>
-                        selected.map(id => attributes.find(a => a.id === id)?.name).join(', ')
-                      }
-                      MenuProps={MenuProps}
-                    >
-                      {attributes.map((attribute) => (
-                        <MenuItem key={attribute.id} value={attribute.id}>
-                          <Checkbox checked={attrValue.includes(attribute.id)} />
-                          <ListItemText primary={attribute.name} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                </div>
-
-                <input
+                <textarea
                   onChange={(e) => setCategoryDescription(e.target.value)}
                   value={categoryDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  rows={3}
+                  className="w-full py-3 px-4 mt-2 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Description"
+                  required
                 />
-                <div className="text-center mt-5 ">
+                <div className="text-center mt-5">
                   <Button
                     type="submit"
                     fullWidth
                     variant="contained"
                     color="primary"
                   >
-                    Submit
+                    Create Category
                   </Button>
                 </div>
               </form>
@@ -263,38 +276,62 @@ export default function Category() {
         )}
 
         {modalType === "update" && (
-          <div className=" ">
+          <div>
             <h1 className="text-xl font-bold text-center py-5">
               Update Category
             </h1>
             <DialogContent>
               <DialogContentText>
-                To create a new category, please enter the category name here.
+                Update the category details below.
               </DialogContentText>
               <form onSubmit={handleEdit}>
                 <input
                   onChange={(e) => setCategoryName(e.target.value)}
                   value={categoryName}
                   type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  className="w-full py-3 px-4 mt-4 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Name"
+                  required
                 />
+                
+                <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+                  <InputLabel id="update-attributes-label">Attributes</InputLabel>
+                  <Select
+                    labelId="update-attributes-label"
+                    multiple
+                    value={attrValue}
+                    onChange={handleAttributeChange}
+                    input={<OutlinedInput label="Attributes" />}
+                    renderValue={(selected) =>
+                      selected.map(id => attributes.find(a => a.id === id)?.name).join(', ')
+                    }
+                    MenuProps={MenuProps}
+                  >
+                    {attributes.map((attribute) => (
+                      <MenuItem key={attribute.id} value={attribute.id}>
+                        <Checkbox checked={attrValue.includes(attribute.id)} />
+                        <ListItemText primary={attribute.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-                <input
+                <textarea
                   onChange={(e) => setCategoryDescription(e.target.value)}
                   value={categoryDescription}
-                  type="text"
-                  className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  rows={3}
+                  className="w-full py-3 px-4 mt-2 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
                   placeholder="Category Description"
+                  required
                 />
-                <div className="text-center mt-5 ">
+                <div className="text-center mt-5">
                   <Button
                     type="submit"
                     fullWidth
                     variant="contained"
                     color="primary"
                   >
-                    Update
+                    Update Category
                   </Button>
                 </div>
               </form>
@@ -309,17 +346,18 @@ export default function Category() {
 
         {modalType === "delete" && (
           <div>
-            <DialogTitle id="alert-dialog-title"></DialogTitle>
+            <DialogTitle id="alert-dialog-title">
+              Confirm Delete
+            </DialogTitle>
             <DialogContent>
               <DialogContentText id="alert-dialog-description">
-                Are you sure you want to delete this category? This action
-                cannot be undone.
+                Are you sure you want to delete this category? This action cannot be undone.
               </DialogContentText>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose}>Disagree</Button>
-              <Button onClick={handleDelete} autoFocus>
-                Agree
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleDelete} color="error" autoFocus>
+                Delete
               </Button>
             </DialogActions>
           </div>
@@ -339,7 +377,9 @@ export default function Category() {
                     Category Description
                   </h1>
                 </TableCell>
-
+                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <h1 className="text-sm font-semibold">Attributes</h1>
+                </TableCell>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">Action</h1>
                 </TableCell>
@@ -348,13 +388,13 @@ export default function Category() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={4} align="center">
                     Loading categories...
                   </TableCell>
                 </TableRow>
               ) : categories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={4} align="center">
                     No categories found.
                   </TableCell>
                 </TableRow>
@@ -364,6 +404,12 @@ export default function Category() {
                     <TableCell align="center">{category.name}</TableCell>
                     <TableCell align="center">
                       {category.description || "No description available"}
+                    </TableCell>
+                    <TableCell align="center">
+                      {category.attributes && category.attributes.length > 0 
+                        ? category.attributes.map(attr => attr.name).join(', ')
+                        : "No attributes"
+                      }
                     </TableCell>
                     <TableCell align="center">
                       <ModeEditOutlineOutlinedIcon
@@ -387,7 +433,7 @@ export default function Category() {
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(e, value) => (setPage(value), console.log(value))} // updates state
+            onChange={(e, value) => setPage(value)}
           />
         </Stack>
       </div>

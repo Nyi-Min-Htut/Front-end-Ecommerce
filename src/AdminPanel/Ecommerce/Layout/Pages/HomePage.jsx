@@ -16,7 +16,7 @@ const Products = () => {
   const navigate = useNavigate();
 
   const getProducts = async () => {
-  let url = "ecommerce_products";
+  let url = "products";
 
   // check search first so category doesn't block it
   if (searchQuery) {
@@ -34,6 +34,16 @@ const Products = () => {
     toast.error("Something went wrong");
   }
 };
+
+ const getProductImage = (product) => {
+    // Find the main product image (where product_variant_id is null)
+    const mainImage = product.product_images.find(img => img.product_variant_id === null);
+    
+    // If no main image found, use the first available image
+    return mainImage ? mainImage.image_url : 
+           product.product_images.length > 0 ? product.product_images[0].image_url : 
+           '/placeholder-image.jpg'; // Fallback image
+  };
 
   const [categories, setCategories] = useState([]);
 
@@ -108,7 +118,7 @@ const Products = () => {
               {/* Product Image */}
               <div className="relative">
                 <img
-                  src={product.image.image_url}
+                  src={getProductImage(product)}
                   alt={product.name}
                   className="w-full h-48 object-cover"
                 />

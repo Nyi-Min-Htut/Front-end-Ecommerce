@@ -1,16 +1,6 @@
 import React, { useEffect, useState } from "react";
-import Checkbox from "@mui/material/Checkbox";
-import TextField from "@mui/material/TextField";
-import Autocomplete from "@mui/material/Autocomplete";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { toast } from "react-toastify";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
-import AddBoxIcon from "@mui/icons-material/AddBox";
 import AddIcon from "@mui/icons-material/Add";
-
 import { getData, postData } from "../../axios/axios";
 import {
   FormControl,
@@ -18,29 +8,28 @@ import {
   Select,
   MenuItem,
   Button,
-  Dialog,
-  DialogContentText,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
-const checkedIcon = <CheckBoxIcon fontSize="small" />;
-
-export default function EmployeeCreatePage() { // Fixed component name
+export default function EmployeeEditPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone_number, setPhoneNumber] = useState(""); // Fixed: phone -> phone_number
+  const [phone_number, setPhoneNumber] = useState("");
   const [dob, setDob] = useState("");
   const [address, setAddress] = useState("");
-  const [role_id, setRoleId] = useState(""); // Fixed: roleId -> role_id
-  const [remark, setRemark] = useState(""); // Fixed: remarks -> remark
+  const [role_id, setRoleId] = useState("");
+  const [remark, setRemark] = useState("");
   const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [roles, setRoles] = useState([]);
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [existingImage, setExistingImage] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -62,11 +51,39 @@ export default function EmployeeCreatePage() { // Fixed component name
     }
   };
 
+  const getEmployee = async () => {
+    try {
+      setLoading(true);
+      let response = await getData(`employees/${id}`);
+      if (response.status === 200) {
+        const employee = response.data;
+        setName(employee.name || "");
+        setEmail(employee.email || "");
+        setPhoneNumber(employee.phone_number || "");
+        setDob(employee.dob || "");
+        setAddress(employee.address || "");
+        setRoleId(employee.role_id || "");
+        setRemark(employee.remark || "");
+        setGender(employee.gender || "");
+        setExistingImage(employee.image_url || null);
+      } else {
+        toast.error("Failed to fetch employee details");
+      }
+    } catch (error) {
+      toast.error("Error fetching employee details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     getRoles();
-  }, []);
+    if (id) {
+      getEmployee();
+    }
+  }, [id]);
 
-  const createEmployee = async (e) => {
+  const updateEmployee = async (e) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -105,63 +122,78 @@ export default function EmployeeCreatePage() { // Fixed component name
       return;
     }
 
-    if (!image) {
-      toast.warning("Please upload an image");
-      return; // Added return to prevent submission
-    }
+    // Only validate passwords if they are provided (for update)
+    if (password || confirmPassword) {
+      if (password !== confirmPassword) {
+        toast.warning("Password and Confirm Password must be same");
+        return;
+      }
 
-    if (password !== confirmPassword) {
-      toast.warning("Password and Confirm Password must be same");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.warning("Password must be at least 6 characters long");
-      return;
+      if (password.length < 6) {
+        toast.warning("Password must be at least 6 characters long");
+        return;
+      }
     }
 
     // Build FormData with correct field names
     let formData = new FormData();
     formData.append("name", name);
     formData.append("email", email);
-    formData.append("phone_number", phone_number); // Fixed field name
+    formData.append("phone_number", phone_number);
     formData.append("dob", dob);
     formData.append("address", address);
-    formData.append("role_id", role_id); // Fixed field name
-    formData.append("remark", remark); // Fixed field name
-    formData.append('image', image);
+    formData.append("role_id", role_id);
+    formData.append("remark", remark);
     formData.append('gender', gender);
-    formData.append('password', password);
+    
+    // Only append password if provided
+    if (password) {
+      formData.append('password', password);
+    }
+    
+    // Only append image if a new one is selected
+    if (image) {
+      formData.append('image', image);
+    }
+    
 
     try {
-      let response = await postData("employees", formData);
+      let response = await postData(`employees/${id}`, formData);
 
       if (response.status === 200) {
-        toast.success("Employee created successfully");
+        toast.success("Employee updated successfully");
         navigate("/admin/employees");
       } else {
-        toast.error("Failed to create employee. Please try again.");
+        toast.error("Failed to update employee. Please try again.");
       }
     } catch (error) {
-      toast.error("Error creating employee");
+      toast.error("Error updating employee");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-xl">Loading employee details...</div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <form
-        onSubmit={createEmployee}
+        onSubmit={updateEmployee}
         className=" w-4/5 mx-auto my-10 px-40 py-5 rounded-lg shadow-lg"
       >
-        <h1 className="text-center text-xl font-bold">Create New Employee</h1>
+        <h1 className="text-center text-xl font-bold">Edit Employee</h1>
 
         <div className="flex justify-center items-center gap-4 mt-10">
-          {/* Preview if exists */}
-          {preview && (
+          {/* Show existing image or new preview */}
+          {(preview || existingImage) && (
             <div className="relative">
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300 flex items-center justify-center">
                 <img
-                  src={preview}
+                  src={preview || existingImage}
                   alt="preview"
                   className="w-full h-full object-cover"
                 />
@@ -175,8 +207,8 @@ export default function EmployeeCreatePage() { // Fixed component name
             </div>
           )}
 
-          {/* Plus Button */}
-          {!preview && (
+          {/* Plus Button - show if no image exists */}
+          {!preview && !existingImage && (
             <div>
               <input
                 type="file"
@@ -189,6 +221,24 @@ export default function EmployeeCreatePage() { // Fixed component name
                 <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center cursor-pointer hover:border-blue-400 transition">
                   <AddIcon fontSize="large" className="text-gray-400" />
                 </div>
+              </label>
+            </div>
+          )}
+
+          {/* Change Image Button - show if existing image exists but no new image selected */}
+          {existingImage && !preview && (
+            <div>
+              <input
+                type="file"
+                id="change-image"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleImageChange}
+              />
+              <label htmlFor="change-image">
+                <Button variant="outlined" component="span">
+                  Change Image
+                </Button>
               </label>
             </div>
           )}
@@ -212,23 +262,29 @@ export default function EmployeeCreatePage() { // Fixed component name
           required
         />
 
-        <input
-          onChange={(e) => setPassword(e.target.value)}
-          value={password}
-          type="password" // Changed to password type for security
-          className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-          placeholder="Password"
-          required
-        />
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">
+            Change Password (Optional)
+          </h3>
+          <input
+            onChange={(e) => setPassword(e.target.value)}
+            value={password}
+            type="password"
+            className="w-full py-3 px-4 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+            placeholder="New Password (leave blank to keep current)"
+          />
 
-        <input
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          value={confirmPassword}
-          type="password" // Changed to password type for security
-          className="w-full py-3 px-4 mt-7 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
-          placeholder="Confirm Password"
-          required
-        />
+          <input
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={confirmPassword}
+            type="password"
+            className="w-full py-3 px-4 mt-2 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+            placeholder="Confirm New Password"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Only fill these fields if you want to change the password
+          </p>
+        </div>
 
         <input
           onChange={(e) => setPhoneNumber(e.target.value)}
@@ -308,7 +364,7 @@ export default function EmployeeCreatePage() { // Fixed component name
             color="primary"
             size="large"
           >
-            Create Employee
+            Update Employee
           </Button>
         </div>
 
