@@ -1,6 +1,7 @@
 import { Button } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
+import { getData } from '../../axios/axios';
 
 export default function VariantEdit() {
     const [open, setOpen] = useState(false);
@@ -21,18 +22,21 @@ export default function VariantEdit() {
     const [variants, setVariants] = useState([]);
     const { id } = useParams();
 
-    const getProductDetail = async (id) => {
-        let response = await getData("products/varaints" + id);
+    const getProductVariantDetail = async (id) => {
+        let response = await getData("products/variants/" + id);
         if (response.status === 200) {
             setProduct(response.data);
-            setVariants(response.data.product_variants);
-            set
-
+            setVariants(response.data);
+            setName(response.data.name);
+            setPrice(response.data.price);
+            setStock(response.data.stock);
+            setDescription(response.data.description);
+            setAttributes(response.data.attributes || []);
+            
         }
     };
-
     useEffect(()=>{
-        getProductDetail(id);
+        getProductVariantDetail(id);
     },[])
 
     const handleImageChange = (e) => {

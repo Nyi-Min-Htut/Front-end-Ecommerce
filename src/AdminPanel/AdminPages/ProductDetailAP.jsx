@@ -416,7 +416,7 @@ export default function ProductDetailAP() {
         {(!product.product_variants || product.product_variants.length === 0) && (
           <div className="mt-12 text-center py-12 bg-gray-50 rounded-lg">
             <div className="text-gray-400 text-lg mb-2">No variants available</div>
-            <p className="text-gray-500 text-sm">This product doesn't have any variants yet.</p>
+            <p className="text-gray-500 text-sm">This product doesn't ve any variants yet.</p>
           </div>
         )}
       </div>

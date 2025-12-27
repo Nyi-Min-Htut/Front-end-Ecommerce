@@ -7,7 +7,7 @@ export default function ProtectedRoute({ allowedRoles }) {
 
   if (!token) {
     // Not logged in → redirect to login
-    return <Navigate to="/adminlogin" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role_id)) {

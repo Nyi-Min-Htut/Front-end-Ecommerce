@@ -41,6 +41,8 @@ export default function Category() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [attrValue, setAttrValue] = useState([]);
+  const [catImg, setCatImage] = useState("");
+  const [previewImg, setPreviewImg] = useState("");
 
   const getCategories = async () => {
     setLoading(true);
@@ -97,25 +99,27 @@ export default function Category() {
     if (modal === "create") {
       setModalType("create");
     } else if (modal === "update") {
-        let response = await getData(`categories/${id}`);
-        if (response.status === 200) {
-          const category = response.data;
-          setCategoryName(category.name);
-          setCategoryDescription(category.description);
-          
-          // Pre-select existing attributes for update
-          if (category.attributes && category.attributes.length > 0) {
-            const existingAttributeIds = category.attributes.map(attr => attr.id);
-            setAttrValue(existingAttributeIds);
-          }
-          
-          setModalType("update");
+      let response = await getData(`categories/${id}`);
+      if (response.status === 200) {
+        const category = response.data;
+        setCategoryName(category.name);
+        setCategoryDescription(category.description);
+        setCatImage(category.image_url);
+        setPreviewImg(category.image_url);
+
+        // Pre-select existing attributes for update
+        if (category.attributes && category.attributes.length > 0) {
+          const existingAttributeIds = category.attributes.map(attr => attr.id);
+          setAttrValue(existingAttributeIds);
         }
-     
+
+        setModalType("update");
+      }
+
     } else {
       setModalType("delete");
     }
-    
+
     if (id != null) {
       setRequireID(id);
     }
@@ -137,11 +141,12 @@ export default function Category() {
       toast.error("Please fill in all fields");
       return;
     }
-    
+
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
     formdata.append('attribute_ids', JSON.stringify(attrValue));
+    formdata.append('image', catImg);
 
     let response = await postData("categories", formdata);
 
@@ -160,11 +165,12 @@ export default function Category() {
       toast.error("Please fill in all fields");
       return;
     }
-    
+
     let formdata = new FormData();
     formdata.append("name", categoryName);
     formdata.append("description", categoryDescription);
     formdata.append('attribute_ids', JSON.stringify(attrValue));
+    formdata.append('image', catImg);
 
     let response = await postData(`categories/${requiredID}`, formdata);
     if (response.status == 200) {
@@ -224,7 +230,20 @@ export default function Category() {
                   placeholder="Category Name"
                   required
                 />
-                
+
+                <input
+                  onChange={(e) => {
+                    setCatImage(e.target.files[0]);
+                    setPreviewImg(URL.createObjectURL(e.target.files[0]));
+                  }}
+                  type="file"
+                  className="w-full py-3 px-4 mt-4 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  placeholder="Category Image"
+                  required
+                />
+
+                {previewImg && <img src={previewImg} alt="Preview" className="h-32 w-32 object-cover mt-2 mb-2" />}
+
                 <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
                   <InputLabel id="create-attributes-label">Attributes</InputLabel>
                   <Select
@@ -293,7 +312,21 @@ export default function Category() {
                   placeholder="Category Name"
                   required
                 />
-                
+
+                <input
+                  onChange={(e) => {
+                    setCatImage(e.target.files[0]);
+                    setPreviewImg(URL.createObjectURL(e.target.files[0]));
+                  }}
+                  type="file"
+                  className="w-full py-3 px-4 mt-4 mb-2 border border-gray-300 rounded-md focus:border-blue-500 focus:outline-none focus:border-2"
+                  placeholder="Category Image"
+                  required
+                />
+
+                {previewImg && <img src={previewImg} alt="Preview" className="h-32 w-32 object-cover mt-2 mb-2" />}
+
+
                 <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
                   <InputLabel id="update-attributes-label">Attributes</InputLabel>
                   <Select
@@ -370,6 +403,9 @@ export default function Category() {
             <TableHead>
               <TableRow>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                  <h1 className="text-sm font-semibold">Category Img</h1>
+                </TableCell>
+                <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                   <h1 className="text-sm font-semibold">Category Name</h1>
                 </TableCell>
                 <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
@@ -401,12 +437,19 @@ export default function Category() {
               ) : (
                 categories.map((category) => (
                   <TableRow key={category.id} hover>
+                    <TableCell align="center">
+                      <img
+                        src={category.image_url}
+                        alt={category.name}
+                        className="w-40 h-40 object-cover rounded-t-lg"
+                      />
+                    </TableCell>
                     <TableCell align="center">{category.name}</TableCell>
                     <TableCell align="center">
                       {category.description || "No description available"}
                     </TableCell>
                     <TableCell align="center">
-                      {category.attributes && category.attributes.length > 0 
+                      {category.attributes && category.attributes.length > 0
                         ? category.attributes.map(attr => attr.name).join(', ')
                         : "No attributes"
                       }

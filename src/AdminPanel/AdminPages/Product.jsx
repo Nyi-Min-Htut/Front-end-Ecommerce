@@ -244,7 +244,7 @@ export default function product() {
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        99
+                        {product.total_stock}
                       </TableCell>
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                         <img

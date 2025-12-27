@@ -22,10 +22,16 @@ import CustomerLogin from '../AdminPanel/Ecommerce/Layout/Pages/CustomerLogin';
 import Brand from '../AdminPanel/AdminPages/Brand';
 import VariantEdit from '../AdminPanel/AdminPages/VariantEdit';
 import EmployeeEditPage from '../AdminPanel/AdminPages/EmployeeEdit';
+import CategoriesShowcasing from '../AdminPanel/Ecommerce/Layout/Pages/CateoriesShowcasing';
+import ProductByCategory from '../AdminPanel/Ecommerce/Layout/Pages/ProductByCategory';
+import CartShopping from '../AdminPanel/Ecommerce/Layout/Pages/CartShopping';
+import AboutUs from '../AdminPanel/Ecommerce/Layout/Pages/Aboutus';
+import CustomerProfile from '../AdminPanel/Ecommerce/Layout/Pages/CustomerProfile';
+
 
 const router = createBrowserRouter([
   {
-    path:"/adminlogin",
+    path:"/admin/login",
     element: <LoginPage/>
   },
   {
@@ -49,6 +55,14 @@ const router = createBrowserRouter([
         element: <HomePage/>
       },
       {
+        path:'/categories',
+        element: <CategoriesShowcasing/>
+      },
+      {
+        path:'/products/category/:id',
+        element: <ProductByCategory/>
+      },
+      {
         path:'/products/:id',
         element: <ProductDetail/>
       },
@@ -59,6 +73,18 @@ const router = createBrowserRouter([
       {
         path:'/orderedlist/:id',
         element: <OrderDetail/>
+      },
+      {
+        path:'/shopping_cart',
+        element: <CartShopping/>
+      },
+      {
+        path:'/about_us',
+        element: <AboutUs/>
+      },
+      {
+        path:'/profile',
+        element: <CustomerProfile/>
       }
       
     ]

@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-const [credentials, setCredentials] = useState({ phone: '', password: '' });
+  const [credentials, setCredentials] = useState({ phone: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -16,40 +16,38 @@ const [credentials, setCredentials] = useState({ phone: '', password: '' });
       [name]: value
     }));
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    const formData = new FormData();
-    formData.append('phone', credentials.phone);
-    formData.append('password', credentials.password);
-    formData.append('remember', document.getElementById('remember-me').checked);
+    try {
+      const formData = new FormData();
+      formData.append('phone_number', credentials.phone);
+      formData.append('password', credentials.password);
+      formData.append('remember', document.getElementById('remember-me').checked);
 
-    const response = await postData('admin/login', formData);
-if (response.status === 200) {
-  console.log('authenticated');
+      const response = await postData('employee/login', formData);
+     
+      if (response.status === 200) {
 
-  const token = response.data.access_token;
-  const user = response.data.employee;
-
-  localStorage.setItem('authToken', token);
-  localStorage.setItem('authUser', JSON.stringify(user));
-  toast.success('Login successful!');
-  navigate("/admin/employees");
-
-
-} else {
-  toast.error(response.data.message || 'Login failed. Please try again.');
-}
+        const token = response.data.token;
+        const user = response.data.employee;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('authUser', JSON.stringify(user));
+        toast.success('Login successful!');
+        navigate("/admin/employees");
 
 
-  } catch (err) {
-    toast.warning(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      } else {
+        toast.error(response.data.message || 'Login failed. Please try again.');
+      }
+
+    } catch (err) {
+      toast.warning(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
 
@@ -80,7 +78,7 @@ if (response.status === 200) {
             <div className="mt-6">
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
-                  <label  className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700">
                     Phone
                   </label>
                   <div className="mt-1">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from './Navbar'
 import { Outlet } from 'react-router-dom'
 import { 
@@ -6,400 +6,220 @@ import {
   Box, 
   Typography, 
   Button, 
-  Divider, 
-  IconButton
+  IconButton 
 } from '@mui/material'
-import {
-  Close,
-  Add,
-  Remove,
-  Delete,
-  LocalShipping,
-  Security,
-  ShoppingCart
-} from '@mui/icons-material'
+import { Close, Add, Remove, Delete, ShoppingCart } from '@mui/icons-material'
+import axios from 'axios'
+import Snowfall from 'react-snowfall'
 
 export default function HomePageLayout() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [cartOpen, setCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("")
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const handleOpenCart = () => setCartOpen(true);
-  const handleCloseCart = () => setCartOpen(false);
+  // Fetch cart data from API
+  useEffect(() => {
+    fetchCartData()
+  }, [])
 
-  const cartItems = [
-    {
-      id: 1,
-      name: "Wireless Bluetooth Headphones",
-      price: 129.99,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop",
-      color: "Black",
-      features: ["Noise Cancelling", "Wireless", "20hr Battery"]
-    },
-    {
-      id: 2,
-      name: "Smart Fitness Watch",
-      price: 199.99,
-      quantity: 2,
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop",
-      color: "Midnight Blue",
-      features: ["Heart Rate Monitor", "GPS", "Water Resistant"]
-    },
-    {
-      id: 3,
-      name: "Premium Laptop Backpack",
-      price: 79.99,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=300&fit=crop",
-      color: "Charcoal Gray",
-      features: ["Water Resistant", "15\" Laptop", "USB Charging"]
-    },
-    {
-      id: 4,
-      name: "Mechanical Keyboard",
-      price: 89.99,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=300&h=300&fit=crop",
-      color: "RGB",
-      features: ["Mechanical Switches", "RGB Lighting", "Wireless"]
-    },
-    {
-      id: 5,
-      name: "Gaming Mouse",
-      price: 59.99,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300&h=300&fit=crop",
-      color: "Black",
-      features: ["16000 DPI", "Wireless", "7 Buttons"]
+  const fetchCartData = async () => {
+    setLoading(false);
+  }
+
+  const handleOpenCart = () => setCartOpen(true)
+  const handleCloseCart = () => setCartOpen(false)
+
+  // Update quantity
+  const updateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return // Prevent zero or negative quantities
+    
+    try {
+      // Call API to update quantity
+      await axios.put(`http://localhost:8000/api/cart/${itemId}`, {
+        quantity: newQuantity
+      })
+      
+      // Update local state
+      setCartItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      ))
+    } catch (error) {
+      console.error('Error updating quantity:', error)
     }
-  ];
+  }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // Remove item from cart
+  const removeItem = async (itemId) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/cart/${itemId}`)
+      setCartItems(prev => prev.filter(item => item.id !== itemId))
+    } catch (error) {
+      console.error('Error removing item:', error)
+    }
+  }
+
+  // Calculate totals
+  const subtotal = cartItems.reduce((sum, item) => 
+    sum + (item.price * item.quantity), 0
+  )
+  const shipping = subtotal > 100 ? 0 : 9.99
+  const tax = subtotal * 0.08
+  const total = subtotal + shipping + tax
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div>
+      <Snowfall color='#82C3D9' />
+      <Snowfall color='#edededff' />
+      <Snowfall color='#cdcdcdff' />
+
+
       <Navbar onSearchChange={setSearchQuery} onCartClick={handleOpenCart} />
       <Outlet context={{ searchQuery }} />
 
-      {/* Single Column Cart Modal */}
-      <Modal 
-        open={cartOpen} 
-        onClose={handleCloseCart}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: { xs: 1, sm: 2 }
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            maxWidth: { xs: '100%', sm: '800px', lg: '1000px' },
-            height: { xs: '100%', sm: '90vh' },
-            maxHeight: { xs: '100%', sm: '800px' },
-            bgcolor: 'background.paper',
-            borderRadius: { xs: 0, sm: 2 },
-            boxShadow: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-          }}
-        >
+      {/* Cart Modal */}
+      <Modal open={cartOpen} onClose={handleCloseCart}>
+        <Box className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                       bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          
           {/* Header */}
-          <Box sx={{ 
-            p: { xs: 2, sm: 3 },
-            borderBottom: 1,
-            borderColor: 'divider',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexShrink: 0,
-            bgcolor: 'white'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <ShoppingCart sx={{ fontSize: 28, color: 'primary.main' }} />
-              <Box>
-                <Typography variant="h5" fontWeight="bold">
-                  Shopping Cart
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {cartItems.length} items in your cart
-                </Typography>
-              </Box>
-            </Box>
-            <IconButton 
-              onClick={handleCloseCart}
-              size="large"
-              sx={{ 
-                bgcolor: 'grey.100',
-                '&:hover': { bgcolor: 'grey.200' }
-              }}
-            >
+          <div className="flex justify-between items-center p-6 border-b">
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="text-blue-600 text-3xl" />
+              <div>
+                <h2 className="text-2xl font-bold">Shopping Cart</h2>
+                <p className="text-gray-500">{cartItems.length} items</p>
+              </div>
+            </div>
+            <IconButton onClick={handleCloseCart} className="bg-gray-100 hover:bg-gray-200">
               <Close />
             </IconButton>
-          </Box>
+          </div>
 
-          {/* Scrollable Content - Everything in one column */}
-          <Box sx={{ 
-            flex: 1,
-            overflow: 'auto',
-            p: { xs: 2, sm: 3 }
-          }}>
-            {/* Cart Items */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-                Your Items ({cartItems.length})
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {cartItems.map((item) => (
-                  <Box
-                    key={item.id}
-                    sx={{
-                      display: 'flex',
-                      gap: { xs: 2, sm: 3 },
-                      p: { xs: 2, sm: 3 },
-                      borderRadius: 2,
-                      bgcolor: 'grey.50',
-                      alignItems: 'center',
-                      border: '1px solid',
-                      borderColor: 'grey.200'
-                    }}
-                  >
+          {/* Cart Items */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            {cartItems.length === 0 ? (
+              <div className="text-center py-10">
+                <ShoppingCart className="text-gray-300 text-6xl mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600">Your cart is empty</h3>
+                <p className="text-gray-500">Add some products to your cart!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {cartItems.map(item => (
+                  <div key={item.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg border">
+                    
                     {/* Product Image */}
-                    <img
-                      src={item.image}
+                    <img 
+                      src={item.image || 'https://via.placeholder.com/100'}
                       alt={item.name}
-                      style={{
-                        width: '100px',
-                        height: '100px',
-                        borderRadius: 12,
-                        objectFit: 'cover',
-                        flexShrink: 0
-                      }}
+                      className="w-24 h-24 rounded-lg object-cover"
                     />
 
                     {/* Product Details */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
-                        {item.name}
-                      </Typography>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                      <p className="text-gray-600 text-sm mb-2">Color: {item.color}</p>
                       
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Color: {item.color}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {item.features.map((feature, index) => (
-                            <Box
-                              key={index}
-                              sx={{
-                                px: 1,
-                                py: 0.5,
-                                bgcolor: 'primary.light',
-                                color: 'primary.contrastText',
-                                borderRadius: 1,
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold'
-                              }}
-                            >
-                              {feature}
-                            </Box>
-                          ))}
-                        </Box>
-                      </Box>
+                      {/* Features */}
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {item.features?.slice(0, 3).map((feature, index) => (
+                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 
+                                                     text-xs rounded-full">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
 
-                      {/* Price and Quantity */}
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: 2
-                      }}>
-                        <Typography variant="h6" color="primary.main" fontWeight="bold">
+                      {/* Price & Quantity Controls */}
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-blue-600 text-lg">
                           ${item.price}
-                        </Typography>
+                        </span>
                         
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <div className="flex items-center gap-2">
                           <IconButton 
                             size="small" 
-                            sx={{ 
-                              bgcolor: 'white',
-                              border: 1,
-                              borderColor: 'grey.300',
-                              '&:hover': { bgcolor: 'grey.100' }
-                            }}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="bg-white border"
                           >
-                            <Remove />
+                            <Remove fontSize="small" />
                           </IconButton>
-                          <Typography 
-                            sx={{ 
-                              minWidth: 40, 
-                              textAlign: 'center',
-                              fontWeight: 'bold',
-                              fontSize: '1.1rem'
-                            }}
-                          >
+                          
+                          <span className="w-10 text-center font-bold">
                             {item.quantity}
-                          </Typography>
+                          </span>
+                          
                           <IconButton 
                             size="small"
-                            sx={{ 
-                              bgcolor: 'white',
-                              border: 1,
-                              borderColor: 'grey.300',
-                              '&:hover': { bgcolor: 'grey.100' }
-                            }}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="bg-white border"
                           >
-                            <Add />
+                            <Add fontSize="small" />
                           </IconButton>
-                        </Box>
-                      </Box>
-                    </Box>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Delete Button */}
                     <IconButton 
-                      color="error"
-                      sx={{ 
-                        bgcolor: 'error.light',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'error.main' },
-                        flexShrink: 0
-                      }}
+                      onClick={() => removeItem(item.id)}
+                      className="text-red-500 hover:bg-red-50"
                     >
                       <Delete />
                     </IconButton>
-                  </Box>
+                  </div>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            )}
+          </div>
 
-            {/* Order Summary - At the bottom of scrollable content */}
-            <Box sx={{ 
-              bgcolor: 'grey.50',
-              borderRadius: 2,
-              p: { xs: 3, sm: 4 },
-              border: '1px solid',
-              borderColor: 'grey.200'
-            }}>
-              <Typography variant="h5" fontWeight="bold" sx={{ mb: 3, textAlign: 'center' }}>
-                Order Summary
-              </Typography>
-
-              {/* Trust Badges */}
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center',
-                gap: 4,
-                mb: 4,
-                p: 3,
-                bgcolor: 'white',
-                borderRadius: 2
-              }}>
-                <Box sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LocalShipping sx={{ color: 'primary.main' }} />
-                  <Typography variant="body1" fontWeight="bold">Free Shipping</Typography>
-                </Box>
-                <Box sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Security sx={{ color: 'primary.main' }} />
-                  <Typography variant="body1" fontWeight="bold">Secure Checkout</Typography>
-                </Box>
-              </Box>
-
-              {/* Discount Code */}
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="body1" fontWeight="bold" sx={{ mb: 2 }}>
-                  💰 Apply Discount Code
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Box 
-                    sx={{ 
-                      flex: 1,
-                      p: 2,
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      bgcolor: 'white',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <Typography variant="body1" color="text.secondary">
-                      Enter promo code...
-                    </Typography>
-                  </Box>
-                  <Button 
-                    variant="outlined" 
-                    sx={{ 
-                      minWidth: '120px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Apply
-                  </Button>
-                </Box>
-              </Box>
-
-              {/* Pricing Breakdown */}
-              <Box sx={{ mb: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pb: 1 }}>
-                  <Typography variant="body1" color="text.secondary">Subtotal</Typography>
-                  <Typography variant="body1" fontWeight="bold">${subtotal.toFixed(2)}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pb: 1 }}>
-                  <Typography variant="body1" color="text.secondary">Shipping</Typography>
-                  <Typography 
-                    variant="body1" 
-                    fontWeight="bold"
-                    color={shipping === 0 ? 'success.main' : 'text.primary'}
-                  >
+          {/* Order Summary - Only show if cart has items */}
+          {cartItems.length > 0 && (
+            <div className="p-6 border-t bg-gray-50">
+              <h3 className="text-xl font-bold mb-4">Order Summary</h3>
+              
+              {/* Price Breakdown */}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span className="font-bold">${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping</span>
+                  <span className={shipping === 0 ? 'text-green-600 font-bold' : 'font-bold'}>
                     {shipping === 0 ? 'FREE' : `$${shipping}`}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pb: 1 }}>
-                  <Typography variant="body1" color="text.secondary">Tax</Typography>
-                  <Typography variant="body1" fontWeight="bold">${tax.toFixed(2)}</Typography>
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h5" fontWeight="bold">Total Amount</Typography>
-                  <Typography variant="h5" fontWeight="bold" color="primary.main">
-                    ${total.toFixed(2)}
-                  </Typography>
-                </Box>
-              </Box>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax</span>
+                  <span className="font-bold">${tax.toFixed(2)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-blue-600">${total.toFixed(2)}</span>
+                </div>
+              </div>
 
               {/* Checkout Button */}
               <Button 
-                variant="contained" 
-                size="large" 
                 fullWidth 
-                sx={{ 
-                  py: 2,
-                  borderRadius: 2,
-                  fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  mb: 2
-                }}
+                variant="contained" 
+                className="bg-blue-600 hover:bg-blue-700 py-3"
               >
-                🛒 Proceed to Secure Checkout
+                Proceed to Checkout
               </Button>
-
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                align="center"
-                sx={{ fontStyle: 'italic' }}
-              >
-                🔒 Your payment information is secure and encrypted
-              </Typography>
-            </Box>
-          </Box>
+            </div>
+          )}
         </Box>
       </Modal>
     </div>

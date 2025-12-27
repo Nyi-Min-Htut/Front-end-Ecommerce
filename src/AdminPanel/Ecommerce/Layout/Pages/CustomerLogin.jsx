@@ -64,14 +64,14 @@ const CustomerLogin = () => {
     if (validateForm()) {
       let response = await postData("customers/login", formData);
 
-      if (response.status) {
-        const token = response.data.access_token;
+      if (response.status==200) {
+        const token = response.data.token;
         const user = response.data.customer;
 
-        localStorage.setItem('eauthToken',token);
-        localStorage.setItem('cauthUser',JSON.stringify(user));
+        localStorage.setItem('customer_token',token);
+        localStorage.setItem('customer_auth_user',JSON.stringify(user));
         toast.success("Login successfully");
-        navigate("/");
+        navigate('/');
       } else {
         toast.error("Somethings went wrong");
       }
