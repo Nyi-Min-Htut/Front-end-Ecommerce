@@ -124,7 +124,7 @@ const Navbar = ({ onSearchChange, onCartClick }) => {
                 onClick={() => navigate("/")}
                 className="text-2xl cursor-pointer font-bold text-blue-600 hover:text-blue-700"
               >
-                Phones
+                Ecommerce
               </button>
             </div>
             <div className="hidden md:ml-6 md:flex md:space-x-8">

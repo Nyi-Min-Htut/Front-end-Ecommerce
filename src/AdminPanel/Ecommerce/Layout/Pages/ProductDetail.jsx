@@ -5,9 +5,13 @@ import { toast } from 'react-toastify'
 import {
   Modal, Box, Typography, Button, IconButton,
   Radio, RadioGroup, FormControlLabel, FormControl,
-  FormLabel
+  Chip, Skeleton, Badge, Rating
 } from '@mui/material'
-import { AddShoppingCart, Favorite, Share, ArrowBack } from '@mui/icons-material'
+import {
+  AddShoppingCart, Favorite, Share, ArrowBack,
+  CheckCircle, LocalShipping, Security, Replay,
+  ZoomIn, Remove, Add, Inventory
+} from '@mui/icons-material'
 
 const ProductDetail = () => {
   const { id } = useParams()
@@ -19,6 +23,8 @@ const ProductDetail = () => {
   const [selectedAttributes, setSelectedAttributes] = useState({})
   const [selectedImage, setSelectedImage] = useState(null)
   const [allImagesWithVariantInfo, setAllImagesWithVariantInfo] = useState([])
+  const [wishlist, setWishlist] = useState(false)
+  const [zoomImage, setZoomImage] = useState(false)
 
   // Fetch product data
   useEffect(() => {
@@ -42,7 +48,7 @@ const ProductDetail = () => {
           if (!img.product_variant_id) {
             imagesWithVariant.push({
               ...img,
-              variant: null, // Main product image
+              variant: null,
               variant_name: 'Main Product'
             })
           }
@@ -53,7 +59,7 @@ const ProductDetail = () => {
           variant.product_images?.forEach(img => {
             imagesWithVariant.push({
               ...img,
-              variant: variant, // Reference to variant
+              variant: variant,
               variant_name: variant.name
             })
           })
@@ -71,7 +77,6 @@ const ProductDetail = () => {
             setSelectedVariant(firstImage.variant)
             initializeAttributes(firstImage.variant)
           } else if (productData.product_variants?.length > 0) {
-            // If first image is main, select first variant
             const firstVariant = productData.product_variants[0]
             setSelectedVariant(firstVariant)
             initializeAttributes(firstVariant)
@@ -96,11 +101,8 @@ const ProductDetail = () => {
     setSelectedAttributes(initialAttributes)
   }
 
-  // Handle image click - change both image AND variant if needed
   const handleImageClick = (image) => {
     setSelectedImage(image)
-
-    // If image belongs to a variant, switch to that variant
     if (image.variant && image.variant.id !== selectedVariant?.id) {
       setSelectedVariant(image.variant)
       initializeAttributes(image.variant)
@@ -108,17 +110,15 @@ const ProductDetail = () => {
     }
   }
 
-  // Handle variant change from radio buttons
   const handleVariantChange = (variantId) => {
     const variant = product.product_variants.find(v => v.id === variantId)
     setSelectedVariant(variant)
     initializeAttributes(variant)
     setQuantity(1)
 
-    // Find first image for this variant to display
     const variantImage = allImagesWithVariantInfo.find(
       img => img.variant?.id === variantId
-    ) || allImagesWithVariantInfo.find(img => !img.variant) // fallback to main image
+    ) || allImagesWithVariantInfo.find(img => !img.variant)
 
     if (variantImage) {
       setSelectedImage(variantImage)
@@ -132,48 +132,47 @@ const ProductDetail = () => {
     }))
   }
 
-const handleAddToCart = () => {
-  if (!selectedVariant) {
-    toast.error('Please select a variant')
-    return
+  const handleAddToCart = () => {
+    if (!selectedVariant) {
+      toast.error('Please select a variant')
+      return
+    }
+
+    const cartItem = {
+      product_id: product.id,
+      variant_id: selectedVariant.id,
+      name: product.name,
+      variant_name: selectedVariant.name,
+      price: selectedVariant.price,
+      quantity: quantity,
+      attributes: selectedAttributes,
+      main_image: selectedImage?.image_url || product.product_images?.[0]?.image_url,
+      stock: selectedVariant.stock,
+      selected_image_id: selectedImage?.id
+    }
+
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]')
+    const existingItemIndex = existingCart.findIndex(
+      item => item.variant_id === selectedVariant.id &&
+        JSON.stringify(item.attributes) === JSON.stringify(selectedAttributes)
+    )
+
+    if (existingItemIndex > -1) {
+      existingCart[existingItemIndex].quantity += quantity
+    } else {
+      existingCart.push(cartItem)
+    }
+
+    localStorage.setItem('cart', JSON.stringify(existingCart))
+
+    window.dispatchEvent(new CustomEvent('cartUpdated', {
+      detail: { cartCount: existingCart.reduce((sum, item) => sum + item.quantity, 0) }
+    }))
+
+    toast.success('Added to cart!')
+    setCartModalOpen(true)
   }
 
-  // Create cart item
-  const cartItem = {
-    product_id: product.id,
-    variant_id: selectedVariant.id,
-    name: product.name,
-    variant_name: selectedVariant.name,
-    price: selectedVariant.price,
-    quantity: quantity,
-    attributes: selectedAttributes,
-    main_image: selectedImage?.image_url || product.product_images?.[0]?.image_url,
-    stock: selectedVariant.stock,
-    selected_image_id: selectedImage?.id
-  }
-
-  // Save to localStorage
-  const existingCart = JSON.parse(localStorage.getItem('cart') || '[]')
-  const existingItemIndex = existingCart.findIndex(
-    item => item.variant_id === selectedVariant.id &&
-      JSON.stringify(item.attributes) === JSON.stringify(selectedAttributes)
-  )
-
-  if (existingItemIndex > -1) {
-    existingCart[existingItemIndex].quantity += quantity
-  } else {
-    existingCart.push(cartItem)
-  }
-
-  localStorage.setItem('cart', JSON.stringify(existingCart))
-  
-  window.dispatchEvent(new CustomEvent('cartUpdated', {
-    detail: { cartCount: existingCart.reduce((sum, item) => sum + item.quantity, 0) }
-  }))
-  
-  toast.success('Added to cart!')
-  setCartModalOpen(true)
-}
   const increaseQuantity = () => {
     if (selectedVariant && quantity < selectedVariant.stock) {
       setQuantity(prev => prev + 1)
@@ -186,275 +185,430 @@ const handleAddToCart = () => {
     }
   }
 
+  const toggleWishlist = () => {
+    setWishlist(!wishlist)
+    toast.success(!wishlist ? 'Added to wishlist' : 'Removed from wishlist')
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div>
+                <Skeleton variant="rectangular" height={500} className="rounded-2xl" />
+                <div className="flex gap-4 mt-6">
+                  {[1, 2, 3, 4].map(i => (
+                    <Skeleton key={i} variant="rectangular" width={100} height={100} className="rounded-xl" />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-6">
+                <Skeleton variant="text" height={40} width="80%" />
+                <Skeleton variant="text" height={30} width="60%" />
+                <Skeleton variant="text" height={100} />
+                <Skeleton variant="rectangular" height={200} className="rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Product not found</p>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Inventory className="text-gray-400 text-4xl" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-700 mb-2">Product Not Found</h3>
+          <p className="text-gray-500 mb-6">The product you're looking for doesn't exist or has been removed.</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-shadow"
+          >
+            Return to Products
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <button
-          onClick={() => window.history.back()}
-          className="mb-6 flex items-center text-gray-600 hover:text-blue-600"
-        >
-          <ArrowBack className="mr-2" />
-          Back to products
-        </button>
+        {/* Header with back button and breadcrumb */}
+        <div className="mb-8 flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            className="group flex items-center text-gray-600 hover:text-blue-600 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-200 flex items-center justify-center group-hover:border-blue-200 transition-colors mr-3">
+              <ArrowBack className="text-lg" />
+            </div>
+            <span className="font-medium">Back</span>
+          </button>
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+          <div className="flex items-center text-sm text-gray-500">
+            <span className="hover:text-blue-600 cursor-pointer">Home</span>
+            <span className="mx-2">›</span>
+            <span className="hover:text-blue-600 cursor-pointer">{product.category?.name}</span>
+            <span className="mx-2">›</span>
+            <span className="text-gray-900 font-medium">{product.name}</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-8 lg:p-12">
 
             {/* Left Column - Images */}
-            <div>
-              {/* Main Image */}
-              <div className="mb-4">
-                {selectedImage ? (
-                  <img
-                    src={selectedImage.image_url}
-                    alt={product.name}
-                    className="w-full h-96 object-contain rounded-lg bg-gray-100"
-                  />
-                ) : (
-                  <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400">No image available</span>
+            <div className="space-y-6">
+              {/* Main Image with Zoom */}
+              <div className="relative group">
+                <div
+                  className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden cursor-zoom-in"
+                  onClick={() => setZoomImage(true)}
+                >
+                  {selectedImage ? (
+                    <img
+                      src={selectedImage.image_url}
+                      alt={product.name}
+                      className="w-full h-[500px] object-contain transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-[500px] flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-20 h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Inventory className="text-gray-400 text-3xl" />
+                        </div>
+                        <p className="text-gray-400">No image available</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
+                  className="absolute top-4 right-4 w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
+                  onClick={() => setZoomImage(true)}
+                >
+                  <ZoomIn className="text-gray-700" />
+                </button>
+
+                {/* Stock Badge */}
+                {selectedVariant?.stock > 0 && (
+                  <div className="absolute top-4 left-4">
+                    <Chip
+                      icon={<CheckCircle />}
+                      label={`${selectedVariant.stock} in stock`}
+                      color="success"
+                      className="bg-green-100 text-green-800 border border-green-200"
+                    />
                   </div>
                 )}
               </div>
 
-              {/* Thumbnail Images */}
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {allImagesWithVariantInfo.map((image) => (
-                  <div key={image.id} className="relative">
-                    <img
-                      src={image.image_url}
-                      alt={product.name}
-                      className={`w-20 h-20 object-cover rounded cursor-pointer border-2 ${selectedImage?.id === image.id
-                          ? image.variant ? 'border-green-500' : 'border-blue-500'
-                          : 'border-transparent hover:border-gray-300'
-                        }`}
-                      onClick={() => handleImageClick(image)}
-                    />
-
-                  </div>
-                ))}
+              {/* Thumbnail Gallery */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">Gallery</h4>
+                  <span className="text-sm text-gray-500">{allImagesWithVariantInfo.length} images</span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-4">
+                  {allImagesWithVariantInfo.map((image) => (
+                    <div key={image.id} className="relative flex-shrink-0">
+                      <div
+                        className={`relative w-24 h-24 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${selectedImage?.id === image.id
+                          ? image.variant
+                            ? 'ring-3 ring-green-500 ring-offset-2'
+                            : 'ring-3 ring-blue-500 ring-offset-2'
+                          : 'ring-1 ring-gray-200 hover:ring-2 hover:ring-blue-300'
+                          }`}
+                        onClick={() => handleImageClick(image)}
+                      >
+                        <img
+                          src={image.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {image.variant && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1">
+                            <p className="text-xs text-white truncate">{image.variant_name}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Right Column - Product Info */}
-            <div className="space-y-6">
-              {/* Brand and Category */}
-              <div className="flex items-center gap-4">
-
-              </div>
-
-              {/* Product Name */}
-              <h1 className="text-3xl font-bold text-gray-900">
-                {product.name}
-              </h1>
-
-              <span className="text-2xl font-bold text-gray-900">
-                {product.brand?.name}
-              </span>
-              <div>
-                <span className="text-xl font-bold text-gray-900">
-                Category :{product.category?.name}
-              </span>
-              </div>
-              {/* Description */}
-              <p className="text-gray-600">
-                {product.description}
-              </p>
-
-              {/* Variant Selection */}
-              {product.product_variants?.length > 0 && (
-                <div className="space-y-4">
-                  <FormControl component="fieldset">
-                    <FormLabel className="font-bold text-gray-900 mb-2">
-                      Select Variant {selectedVariant && `(Currently: ${selectedVariant.name})`}
-                    </FormLabel>
-                    <RadioGroup
-                      value={selectedVariant?.id || ''}
-                      onChange={(e) => handleVariantChange(parseInt(e.target.value))}
-                    >
-                      <div className="space-y-2">
-                        {product.product_variants.map(variant => (
-                          <div
-                            key={variant.id}
-                            className={`border rounded-lg p-4 ${selectedVariant?.id === variant.id
-                                ? 'border-green-500 bg-green-50'
-                                : 'border-gray-200'
-                              }`}
-                          >
-                            <FormControlLabel
-                              value={variant.id}
-                              control={<Radio />}
-                              label={
-                                <div className="flex justify-between items-center w-full">
-                                  <div>
-                                    <span className="font-semibold">{variant.name}</span>
-                                    {variant.description && (
-                                      <p className="text-sm text-gray-500">{variant.description}</p>
-                                    )}
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-lg text-blue-600">
-                                      ${variant.price}
-                                    </div>
-                                    <div className={`text-sm ${variant.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      {variant.stock > 0 ? `In stock (${variant.stock})` : 'Out of stock'}
-                                    </div>
-                                  </div>
-                                </div>
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
+            <div className="space-y-8">
+              {/* Product Header */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  {product.brand && (
+                    <Chip
+                      label={product.brand.name}
+                      className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border border-blue-200"
+                      size="small"
+                    />
+                  )}
+                  <Chip
+                    label={product.category?.name}
+                    className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 border border-purple-200"
+                    size="small"
+                  />
                 </div>
-              )}
 
-              {/* Attributes Selection */}
-              {selectedVariant?.attributes && selectedVariant.attributes.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-bold text-gray-900">Specifications</h3>
-                  {selectedVariant.attributes.map(attribute => (
-                    <div key={attribute.id} className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        {attribute.name}:
-                      </label>
-                      <select
-                        value={selectedAttributes[attribute.id] || ''}
-                        onChange={(e) => handleAttributeChange(attribute.id, e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Select {attribute.name}</option>
-                        <option value={attribute.pivot?.value || attribute.description}>
-                          {attribute.pivot?.value || attribute.description}
-                        </option>
-                      </select>
+                <div>
+                  <h1 className="text-4xl font-bold text-gray-900 mb-3">
+                    {product.name}
+                  </h1>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center">
+                      <Rating value={4.5} precision={0.5} readOnly />
+                      <span className="ml-2 text-gray-600">(128 reviews)</span>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Price */}
-              <div className="flex items-center justify-between py-4 border-t border-b border-gray-200">
-                <div>
-                  <p className="text-sm text-gray-500">Price</p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    ${selectedVariant ? selectedVariant.price : product.price}
-                  </p>
-                </div>
-
-                {/* Quantity Selector */}
-                <div>
-                  <p className="text-sm text-gray-500 mb-2">Quantity</p>
-                  <div className="flex items-center border rounded-lg">
-                    <button
-                      onClick={decreaseQuantity}
-                      disabled={quantity <= 1}
-                      className="px-4 py-2 text-gray-600 disabled:text-gray-300"
-                    >
-                      -
-                    </button>
-                    <span className="px-4 py-2 border-x">{quantity}</span>
-                    <button
-                      onClick={increaseQuantity}
-                      disabled={selectedVariant && quantity >= selectedVariant.stock}
-                      className="px-4 py-2 text-gray-600 disabled:text-gray-300"
-                    >
-                      +
-                    </button>
+                    <span className="text-green-600 font-semibold">🔥 Best Seller</span>
                   </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={handleAddToCart}
-                  disabled={!selectedVariant || selectedVariant.stock === 0}
-                  className={`flex-1 py-3 px-6 rounded-lg font-semibold flex items-center justify-center gap-2 ${selectedVariant && selectedVariant.stock > 0
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                >
-                  <AddShoppingCart />
-                  {selectedVariant && selectedVariant.stock > 0
-                    ? `Add ${selectedImage?.variant ? selectedImage.variant.name : selectedVariant.name} to Cart - $${(selectedVariant.price * quantity).toFixed(2)}`
-                    : 'Out of Stock'}
-                </button>
-
-                {/* <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  <Favorite className="text-gray-600" />
-                </button>
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-                  <Share className="text-gray-600" />
-                </button> */}
+              {/* Price Display */}
+              <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Total Price</p>
+                    <div className="flex items-center gap-3">
+                      <span className="text-5xl font-bold text-gray-900">
+                        ${selectedVariant ? selectedVariant.price : product.price}
+                      </span>
+                      {product.original_price && (
+                        <span className="text-2xl text-gray-400 line-through">
+                          ${product.original_price}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Chip
+                      label="SAVE 20%"
+                      color="error"
+                      className="bg-gradient-to-r from-red-500 to-orange-500 text-white"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Stock Info */}
-              {selectedVariant && (
-                <div className={`p-3 rounded-lg ${selectedVariant.stock > 10 ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>
-                  {selectedVariant.stock > 10
-                    ? `✅ In stock (${selectedVariant.stock} available)`
-                    : `⚠️ Only ${selectedVariant.stock} left in stock`}
+              {/* Description */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+
+              {/* Variant Selection */}
+              {product.product_variants?.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Select Option</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {product.product_variants.map(variant => (
+                      <button
+                        key={variant.id}
+                        onClick={() => handleVariantChange(variant.id)}
+                        className={`p-4 rounded-xl border-2 transition-all duration-300 ${selectedVariant?.id === variant.id
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          }`}
+                      >
+                        <div className="text-left">
+                          <div className="font-semibold text-gray-900 mb-1">{variant.name}</div>
+                          <div className="text-sm text-gray-500 mb-2">{variant.description}</div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-blue-600">${variant.price}</span>
+                            <Chip
+                              label={variant.stock > 0 ? `${variant.stock} left` : 'Sold out'}
+                              size="small"
+                              color={variant.stock > 0 ? 'success' : 'error'}
+                            />
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* Attributes Selection - Compact Horizontal */}
+              {selectedVariant?.attributes && selectedVariant.attributes.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Specification</h3>
+
+
+                  <div className="space-y-3">
+                    {selectedVariant.attributes.map(({ id, name, pivot }) =>
+                      pivot?.value ? (
+                        <div
+                          key={id}
+                          className="flex justify-start items-center text-sm  pb-2"
+                        >
+                          <span className="text-gray-500 pe-12">{name}</span>
+                          <span className="font-medium text-gray-900">{pivot.value}</span>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+              {/* Quantity and Actions */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-6 bg-gray-50 rounded-2xl">
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">Quantity</p>
+                    <p className="text-sm text-gray-500">Select how many you want</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={decreaseQuantity}
+                      disabled={quantity <= 1}
+                      className="w-10 h-10 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Remove />
+                    </button>
+                    <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
+                    <button
+                      onClick={increaseQuantity}
+                      disabled={selectedVariant && quantity >= selectedVariant.stock}
+                      className="w-10 h-10 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Add />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!selectedVariant || selectedVariant.stock === 0}
+                    className={`flex-1 py-4 px-8 rounded-xl font-semibold flex items-center justify-center gap-3 transition-all duration-300 ${selectedVariant && selectedVariant.stock > 0
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl hover:scale-[1.02]'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                  >
+                    <AddShoppingCart />
+                    {selectedVariant && selectedVariant.stock > 0
+                      ? `Add to Cart • $${(selectedVariant.price * quantity).toFixed(2)}`
+                      : 'Out of Stock'}
+                  </button>
+
+                  <button
+                    onClick={toggleWishlist}
+                    className={`p-4 rounded-xl border-2 flex items-center justify-center transition-all ${wishlist
+                      ? 'border-red-500 bg-red-50 text-red-600'
+                      : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                      }`}
+                  >
+                    <Favorite className={wishlist ? 'fill-current' : ''} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <LocalShipping className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Free Shipping</p>
+                    <p className="text-sm text-gray-500">On orders over $50</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Replay className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">30-Day Returns</p>
+                    <p className="text-sm text-gray-500">Hassle-free returns</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Image Zoom Modal */}
+      <Modal open={zoomImage} onClose={() => setZoomImage(false)}>
+        <Box className="absolute inset-0 bg-black/90 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl max-h-[90vh]">
+            {selectedImage && (
+              <img
+                src={selectedImage.image_url}
+                alt={product.name}
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+              />
+            )}
+            <button
+              onClick={() => setZoomImage(false)}
+              className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+            >
+              <span className="text-white text-xl">×</span>
+            </button>
+          </div>
+        </Box>
+      </Modal>
+
       {/* Add to Cart Success Modal */}
       <Modal open={cartModalOpen} onClose={() => setCartModalOpen(false)}>
         <Box className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                       bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <AddShoppingCart className="text-green-600 text-3xl" />
+                       bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-gray-200">
+          <div className="text-center space-y-6">
+            <div className="w-20 h-20 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="text-green-600 text-4xl" />
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-900">
-              Added to Cart!
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Added to Cart Successfully!
+              </h2>
+              <p className="text-gray-500">Your item has been added to the shopping cart</p>
+            </div>
 
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-6 p-6 bg-gray-50 rounded-xl">
               <img
                 src={selectedImage?.image_url}
                 alt={product.name}
-                className="w-20 h-20 object-cover rounded"
+                className="w-24 h-24 object-cover rounded-xl shadow-sm"
               />
               <div className="text-left">
-                <p className="font-semibold">{product.name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-semibold text-gray-900 mb-1">{product.name}</p>
+                <p className="text-sm text-gray-500 mb-2">
                   {selectedImage?.variant_name || selectedVariant?.name}
                 </p>
-                <p className="font-bold text-blue-600">
-                  ${selectedVariant?.price} × {quantity} = ${(selectedVariant?.price * quantity).toFixed(2)}
-                </p>
+                <div className="flex items-center gap-4">
+                  <span className="font-bold text-blue-600 text-lg">
+                    ${selectedVariant?.price} × {quantity}
+                  </span>
+                  <span className="font-bold text-gray-900 text-lg">
+                    = ${(selectedVariant?.price * quantity).toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="pt-4 space-y-3">
+            <div className="pt-4 space-y-4">
               <button
                 onClick={() => setCartModalOpen(false)}
-                className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg transition-shadow"
               >
                 Continue Shopping
               </button>
@@ -463,9 +617,9 @@ const handleAddToCart = () => {
                   setCartModalOpen(false)
                   window.location.href = '/shopping_cart'
                 }}
-                className="w-full py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50"
+                className="w-full py-4 border-2 border-blue-600 text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
               >
-                View Cart
+                View Cart & Checkout
               </button>
             </div>
           </div>
