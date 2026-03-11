@@ -25,6 +25,7 @@ const ProductDetail = () => {
   const [allImagesWithVariantInfo, setAllImagesWithVariantInfo] = useState([])
   const [wishlist, setWishlist] = useState(false)
   const [zoomImage, setZoomImage] = useState(false)
+  const [activeTab, setActiveTab] = useState('description')
 
   // Fetch product data
   useEffect(() => {
@@ -403,68 +404,229 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Description</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-
-              {/* Variant Selection */}
+              {/* Variant Selection as Tabs */}
               {product.product_variants?.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900">Select Option</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {product.product_variants.map(variant => (
                       <button
                         key={variant.id}
                         onClick={() => handleVariantChange(variant.id)}
-                        className={`p-4 rounded-xl border-2 transition-all duration-300 ${selectedVariant?.id === variant.id
-                          ? 'border-blue-500 bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${selectedVariant?.id === variant.id
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                       >
-                        <div className="text-left">
-                          <div className="font-semibold text-gray-900 mb-1">{variant.name}</div>
-                          <div className="text-sm text-gray-500 mb-2">{variant.description}</div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-blue-600">${variant.price}</span>
-                            <Chip
-                              label={variant.stock > 0 ? `${variant.stock} left` : 'Sold out'}
-                              size="small"
-                              color={variant.stock > 0 ? 'success' : 'error'}
-                            />
-                          </div>
-                        </div>
+                        <span>{variant.name}</span>
+                        {variant.stock <= 5 && variant.stock > 0 && (
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                            Only {variant.stock} left
+                          </span>
+                        )}
+                        {variant.stock === 0 && (
+                          <span className="text-xs bg-red-500 px-2 py-1 rounded-full">
+                            Sold out
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Attributes Selection - Compact Horizontal */}
-              {selectedVariant?.attributes && selectedVariant.attributes.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Specification</h3>
-
-
-                  <div className="space-y-3">
-                    {selectedVariant.attributes.map(({ id, name, pivot }) =>
-                      pivot?.value ? (
-                        <div
-                          key={id}
-                          className="flex justify-start items-center text-sm  pb-2"
-                        >
-                          <span className="text-gray-500 pe-12">{name}</span>
-                          <span className="font-medium text-gray-900">{pivot.value}</span>
+                  
+                  {/* Selected Variant Quick Info */}
+                  {selectedVariant && (
+                    <div className="mt-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Selected: {selectedVariant.name}</p>
+                          <p className="text-xs text-gray-600 mt-1">{selectedVariant.description}</p>
                         </div>
-                      ) : null
-                    )}
-                  </div>
-
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-blue-600">${selectedVariant.price}</p>
+                          <Chip
+                            label={selectedVariant.stock > 0 ? `${selectedVariant.stock} in stock` : 'Out of stock'}
+                            size="small"
+                            color={selectedVariant.stock > 0 ? 'success' : 'error'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Info Tabs */}
+              <div className="space-y-4">
+                {/* Tab Headers */}
+                <div className="flex border-b border-gray-200">
+                  <button
+                    onClick={() => setActiveTab('description')}
+                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'description'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Description
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('specifications')}
+                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'specifications'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Specifications
+                    {selectedVariant?.attributes?.length > 0 && (
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                        {selectedVariant.attributes.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('variant')}
+                    className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'variant'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                  >
+                    Variant Details
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                <div className="min-h-[200px]">
+                  {/* Description Tab */}
+                  {activeTab === 'description' && (
+                    <div className="space-y-4">
+                      {product.short_description && (
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <p className="text-gray-700">{product.short_description}</p>
+                        </div>
+                      )}
+                      <div className="prose max-w-none">
+                        <p className="text-gray-600 leading-relaxed">
+                          {product.description}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Specifications Tab */}
+                  {activeTab === 'specifications' && selectedVariant?.attributes && (
+                    <div className="space-y-4">
+                      {selectedVariant.attributes.length > 0 ? (
+                        <>
+                          {/* Grid Layout for Specifications */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {selectedVariant.attributes.map(({ id, name, pivot }) =>
+                              pivot?.value ? (
+                                <div
+                                  key={id}
+                                  className="group p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all"
+                                >
+                                  <div className="space-y-1">
+                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      {name}
+                                    </span>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                      {pivot.value}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+
+                          {/* Compact View for Many Specs */}
+                          {selectedVariant.attributes.length > 6 && (
+                            <details className="group mt-2">
+                              <summary className="text-sm text-blue-600 cursor-pointer hover:text-blue-700 font-medium">
+                                View all specifications
+                              </summary>
+                              <div className="mt-3 grid grid-cols-2 gap-2">
+                                {selectedVariant.attributes.slice(6).map(({ id, name, pivot }) =>
+                                  pivot?.value ? (
+                                    <div key={id} className="flex justify-between text-sm py-1">
+                                      <span className="text-gray-500">{name}:</span>
+                                      <span className="font-medium text-gray-900">{pivot.value}</span>
+                                    </div>
+                                  ) : null
+                                )}
+                              </div>
+                            </details>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-gray-500 text-center py-8">No specifications available</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Variant Details Tab */}
+                  {activeTab === 'variant' && selectedVariant && (
+                    <div className="space-y-4">
+                      {/* Variant Summary Cards */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-200">
+                          <p className="text-xs text-gray-500 mb-1">Variant Name</p>
+                          <p className="font-semibold text-gray-900">{selectedVariant.name}</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-50 to-white p-4 rounded-xl border border-purple-200">
+                          <p className="text-xs text-gray-500 mb-1">SKU</p>
+                          <p className="font-semibold text-gray-900">{selectedVariant.sku || 'N/A'}</p>
+                        </div>
+                      </div>
+
+                      {/* Variant Description */}
+                      {selectedVariant.description && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <p className="text-sm text-gray-700">{selectedVariant.description}</p>
+                        </div>
+                      )}
+
+                      {/* Quick Stats */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-xs text-gray-500">Stock</p>
+                          <p className={`font-bold ${selectedVariant.stock > 10 
+                            ? 'text-green-600' 
+                            : selectedVariant.stock > 0 
+                              ? 'text-orange-600' 
+                              : 'text-red-600'
+                          }`}>
+                            {selectedVariant.stock}
+                          </p>
+                        </div>
+                        <div className="text-center p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-gray-500">Price</p>
+                          <p className="font-bold text-blue-600">${selectedVariant.price}</p>
+                        </div>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg">
+                          <p className="text-xs text-gray-500">Weight</p>
+                          <p className="font-bold text-purple-600">{selectedVariant.weight || 'N/A'}</p>
+                        </div>
+                      </div>
+
+                      {/* Attributes Quick View */}
+                      {selectedVariant.attributes?.length > 0 && (
+                        <div className="border-t border-gray-200 pt-4">
+                          <p className="text-sm font-medium text-gray-900 mb-3">Variant Specifications</p>
+                          <div className="space-y-2">
+                            {selectedVariant.attributes.slice(0, 4).map(({ id, name, pivot }) =>
+                              pivot?.value ? (
+                                <div key={id} className="flex justify-between text-sm">
+                                  <span className="text-gray-500">{name}:</span>
+                                  <span className="font-medium text-gray-900">{pivot.value}</span>
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Quantity and Actions */}
               <div className="space-y-6">

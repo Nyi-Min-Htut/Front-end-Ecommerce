@@ -27,6 +27,7 @@ import ProductByCategory from '../AdminPanel/Ecommerce/Layout/Pages/ProductByCat
 import CartShopping from '../AdminPanel/Ecommerce/Layout/Pages/CartShopping';
 import AboutUs from '../AdminPanel/Ecommerce/Layout/Pages/Aboutus';
 import CustomerProfile from '../AdminPanel/Ecommerce/Layout/Pages/CustomerProfile';
+import ChatTest from '../AdminPanel/Ecommerce/Layout/Pages/ChatTest';
 
 
 const router = createBrowserRouter([
@@ -81,6 +82,10 @@ const router = createBrowserRouter([
       {
         path:'/about_us',
         element: <AboutUs/>
+      },
+      {
+        path:'/chat_test',
+        element: <ChatTest/>
       },
       {
         path:'/profile',

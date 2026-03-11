@@ -22,6 +22,15 @@ import { useNavigate } from 'react-router-dom';
 import { Pagination, Stack } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import Tooltip from "@mui/material/Tooltip";
+
+// Helper function to truncate description
+const truncateDescription = (description, wordLimit = 10) => {
+  if (!description) return 'No description';
+  const words = description.split(' ');
+  if (words.length <= wordLimit) return description;
+  return words.slice(0, wordLimit).join(' ') + '...';
+};
 
 export default function product() {
   const navigate = useNavigate();
@@ -199,14 +208,14 @@ export default function product() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     Loading products...
                   </TableCell>
                 </TableRow>
               ) :
                 products.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 1 }}>
                       No products found.
                     </TableCell>
                   </TableRow>
@@ -227,60 +236,81 @@ export default function product() {
                       >
                         {product.name}
                       </TableCell>
-                      <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        {product.description}
+                      <TableCell align="center" sx={{ px: 1, py: 0.5, maxWidth: '200px' }}>
+                        <Tooltip title={product.description || 'No description'} arrow>
+                          <span className="block truncate">
+                            {truncateDescription(product.description, 8)}
+                          </span>
+                        </Tooltip>
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        {product.category.name}
+                        {product.category?.name || 'N/A'}
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        {product.brand.name}
+                        {product.brand?.name || 'N/A'}
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        {product.price}
+                        ${product.price}
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
                         {product.total_stock}
                       </TableCell>
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
-                        <img
-                          src={product.product_images[0].image_url}
-                          alt={product.name}
-                          style={{
-                            width: 60,
-                            height: 60,
-                            objectFit: "cover",
-                            borderRadius: "6px",
-                          }}
-                          onError={(e) => (e.target.style.display = "none")} // hide broken img icons
-                        />
+                        {product.product_images && product.product_images.length > 0 ? (
+                          <img
+                            src={product.product_images[0].image_url}
+                            alt={product.name}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              objectFit: "cover",
+                              borderRadius: "6px",
+                            }}
+                            onError={(e) => (e.target.style.display = "none")} // hide broken img icons
+                          />
+                        ) : (
+                          <div className="w-[60px] h-[60px] bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-400">
+                            No img
+                          </div>
+                        )}
                       </TableCell>
 
                       <TableCell align="center" sx={{ px: 1, py: 0.5 }}>
+                        <Tooltip title="View Details" arrow>
+                          <InfoOutlinedIcon
+                            onClick={() => navigate(`/admin/products/${product.id}/details`)}
+                            className="cursor-pointer text-yellow-500 hover:text-yellow-700 mx-1"
+                            fontSize="small"
+                          />
+                        </Tooltip>
+                        <Tooltip title="Add Variation" arrow>
+                          <AddIcon
+                            onClick={() => navigate(`/admin/products_variations_create/${product.id}`)}
+                            className="cursor-pointer text-blue-500 hover:text-blue-700 mx-1"
+                            fontSize="small"
+                          />
+                        </Tooltip>
+                        <Tooltip title="Edit" arrow>
+                          <ModeEditOutlineOutlinedIcon
+                            onClick={() => {
+                              navigate(`/admin/products/${product.id}/edit`);
+                            }}
+                            className="cursor-pointer text-green-500 hover:text-green-700 mx-1"
+                            fontSize="small"
+                          />
+                        </Tooltip>
 
-                        <InfoOutlinedIcon
-                        onClick={()=>navigate(`/admin/products/${product.id}/details`)}
-                        className="cursor-pointer text-yellow-500 hover:text-yellow-700"
-                        />
-                        <AddIcon
-                          onClick={() => navigate(`/admin/products_variations_create/${product.id}`)}
-                          className="cursor-pointer text-blue-500 hover:text-blue-700"
-                        />
-                        <ModeEditOutlineOutlinedIcon
-                          onClick={() => {
-                            navigate(`/admin/products/${product.id}/edit`);
-                          }}
-                          className="cursor-pointer text-green-500 hover:text-green-700 ml-2"
-                        />
-
-                        <DeleteOutlineOutlinedIcon
-                          onClick={() => handleClickOpen(product.id, "delete")}
-                          className="cursor-pointer text-red-500 hover:text-red-700 ml-2"
-                        />
+                        <Tooltip title="Delete" arrow>
+                          <DeleteOutlineOutlinedIcon
+                            onClick={() => handleClickOpen(product.id, "delete")}
+                            className="cursor-pointer text-red-500 hover:text-red-700 mx-1"
+                            fontSize="small"
+                          />
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))

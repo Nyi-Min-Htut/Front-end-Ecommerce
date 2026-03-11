@@ -29,7 +29,7 @@ const CategoriesShowcasing = () => {
 
   const handleCategoryClick = (categoryId, categoryName) => {
     // Navigate to products page with category filter
-    navigate(`/products/category=${categoryId}`);
+    navigate(`/products/category/${categoryId}`);
   };
 
   // Generate random background colors for categories
