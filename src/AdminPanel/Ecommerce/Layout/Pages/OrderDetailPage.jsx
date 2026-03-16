@@ -1,271 +1,243 @@
-import React, { useState } from 'react';
-import {
-  ArrowBack,
-  ShoppingBag,
-  CalendarToday,
-  Payment,
-  LocalShipping,
-  CheckCircle,
-  Pending,
-  Cancel,
-  Assignment,
-  Star,
-  StarBorder
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getData, postData } from '../../../../axios/axios';
+import { toast } from 'react-toastify';
 
-const OrderDetail = () => {
+export default function OrderDetailPage() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState({
-    id: 'ORD-12345',
-    date: '2023-10-15',
-    status: 'delivered',
-    items: 3,
-    total: 149.97,
-    subtotal: 149.97,
-    shipping: 0,
-    tax: 12.50,
-    itemsDetail: [
-      { 
-        id: 1, 
-        name: 'Wireless Headphones', 
-        price: 89.99, 
-        image: 'https://via.placeholder.com/80x80?text=Headphones',
-        quantity: 1,
-        description: 'Noise cancelling wireless headphones with 30h battery life'
-      },
-      { 
-        id: 2, 
-        name: 'Phone Case', 
-        price: 24.99, 
-        image: 'https://via.placeholder.com/80x80?text=Case',
-        quantity: 1,
-        description: 'Premium protective case for smartphones'
-      },
-      { 
-        id: 3, 
-        name: 'USB-C Cable', 
-        price: 34.99, 
-        image: 'https://via.placeholder.com/80x80?text=Cable',
-        quantity: 1,
-        description: 'Fast charging USB-C to USB-C cable, 6ft'
-      }
-    ],
-    shippingAddress: {
-      name: 'John Doe',
-      street: '123 Main St',
-      city: 'San Francisco',
-      state: 'CA',
-      zip: '94111',
-      country: 'United States'
-    },
-    paymentMethod: {
-      type: 'Credit Card',
-      last4: '1234',
-      expDate: '12/25'
-    },
-    trackingNumber: 'TRK-9876543210',
-    estimatedDelivery: '2023-10-18'
-  });
-
+  
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'delivered':
-        return <CheckCircle className="text-green-500" />;
-      case 'shipped':
-        return <LocalShipping className="text-blue-500" />;
-      case 'processing':
-        return <Pending className="text-yellow-500" />;
-      case 'cancelled':
-        return <Cancel className="text-red-500" />;
-      default:
-        return <Pending className="text-gray-500" />;
+  // Simple fetch
+  useEffect(() => {
+    const fetchItem = async () => {
+      try {
+        setLoading(true);
+        const response = await getData(`order_item_details/${id}`, null, 'customer');
+        
+        if (response.status === 200) {
+          setItem(response.data);
+          console.log('Item:', response.data);
+        } else {
+          toast.error('Failed to load');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchItem();
+  }, [id]);
+
+  // Submit rating
+  const submitRating = async () => {
+    if (rating === 0) {
+      toast.error('Please select rating');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const productId = item?.product_variant?.product_id;
+      await postData(`rating_product/${productId}`, { rating, review }, 'customer');
+      toast.success('Rating submitted!');
+      setShowRating(false);
+      setRating(0);
+      setReview('');
+    } catch (error) {
+      toast.error('Failed to submit');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'delivered':
-        return 'Delivered';
-      case 'shipped':
-        return 'Shipped';
-      case 'processing':
-        return 'Processing';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return 'Pending';
-    }
+  // Get first image
+  const getMainImage = () => {
+    return item?.product_variant?.product_images?.[0]?.image_url || '';
   };
 
-  const handleRateProduct = (productId, stars) => {
-    setRating(stars);
-    // In a real app, you would save this rating to your backend
-  };
+  // Loading
+  if (loading) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow p-4 animate-pulse">
+          <div className="h-64 bg-gray-200 rounded mb-4"></div>
+          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
 
-  const handleSubmitReview = (productId) => {
-    // In a real app, you would submit the review to your backend
-    alert(`Review submitted for product ${productId} with rating ${rating} and review: ${review}`);
-    setRating(0);
-    setReview('');
-  };
+  // Not found
+  if (!item) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-500">Item not found</p>
+        <button 
+          onClick={() => navigate('/orders')}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Back to Orders
+        </button>
+      </div>
+    );
+  }
+
+  const product = item.product_variant;
+  const mainImage = getMainImage();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
-      <button 
-        onClick={() => navigate(-1)}
-        className="flex items-center text-blue-600 hover:text-blue-800 mb-6 transition-colors duration-200"
-      >
-        <ArrowBack className="mr-2" />
-        Back to Orders
-      </button>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 text-gray-600 hover:text-gray-800"
+        >
+          ← Back
+        </button>
 
-      {/* Order Header */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order #{order.id}</h1>
-            <p className="text-gray-600 mt-1">Placed on {order.date}</p>
+        {/* Main Card */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          
+          {/* Image */}
+          <div className="w-full h-64 bg-gray-200">
+            {mainImage ? (
+              <img 
+                src={mainImage} 
+                alt={product?.name || 'Product'}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                No Image
+              </div>
+            )}
           </div>
-          <div className="flex items-center">
-            {getStatusIcon(order.status)}
-            <span className="ml-2 font-medium">{getStatusText(order.status)}</span>
+
+          {/* Content */}
+          <div className="p-6">
+            
+            {/* Status Badge */}
+            <span className={`inline-block px-3 py-1 rounded-full text-sm mb-4 ${
+              item.status === 'delivered' ? 'bg-green-100 text-green-700' :
+              item.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+              item.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {item.status}
+            </span>
+
+            {/* Product Name */}
+            <h1 className="text-2xl font-bold mb-2">{product?.name || 'Product Name'}</h1>
+            
+            {/* Description */}
+            <p className="text-gray-600 mb-4">{product?.description || 'No description'}</p>
+
+            {/* Price Info */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="flex justify-between mb-2">
+                <span>Price per item:</span>
+                <span className="font-bold">${parseFloat(item.price).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span>Quantity:</span>
+                <span className="font-bold">{item.quantity}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold text-blue-600 border-t pt-2">
+                <span>Total:</span>
+                <span>${parseFloat(item.total_amount).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Order Info */}
+            <div className="text-sm text-gray-500 mb-4">
+              <div>Order ID: #{item.order_id}</div>
+              <div>Ordered: {new Date(item.created_at).toLocaleDateString()}</div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {item.status === 'delivered' && (
+                <button
+                  onClick={() => setShowRating(true)}
+                  className="flex-1 bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600"
+                >
+                  Rate Product
+                </button>
+              )}
+              <button
+                onClick={() => navigate(`/products/${product?.product_id}`)}
+                className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600"
+              >
+                View Product
+              </button>
+            </div>
           </div>
         </div>
-
-        {order.status === 'shipped' && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center">
-              <LocalShipping className="text-blue-500 mr-2" />
-              <span className="font-medium">Shipped</span>
-            </div>
-            <p className="mt-1 text-sm text-gray-600">
-              Estimated delivery: {order.estimatedDelivery}
-            </p>
-            <p className="text-sm text-gray-600">
-              Tracking number: {order.trackingNumber}
-            </p>
-          </div>
-        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Order Items */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Order Items</h2>
-            <div className="space-y-6">
-              {order.itemsDetail.map(item => (
-                <div key={item.id} className="flex border-b border-gray-200 pb-6 last:border-0 last:pb-0">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
-                  <div className="ml-4 flex-1">
-                    <h3 className="text-md font-medium text-gray-900">{item.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{item.description}</p>
-                    <div className="flex items-center mt-2">
-                      <span className="text-gray-600">Qty: {item.quantity}</span>
-                      <span className="mx-2 text-gray-400">•</span>
-                      <span className="font-bold">${item.price.toFixed(2)}</span>
-                    </div>
-                    
-                    {/* Rating Section */}
-                    <div className="mt-4">
-                      <p className="text-sm font-medium text-gray-900">Rate this product:</p>
-                      <div className="flex items-center mt-1">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <button
-                            key={star}
-                            onClick={() => handleRateProduct(item.id, star)}
-                            className="text-yellow-400 hover:text-yellow-500"
-                          >
-                            {star <= rating ? <Star /> : <StarBorder />}
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        value={review}
-                        onChange={(e) => setReview(e.target.value)}
-                        placeholder="Write a review (optional)"
-                        className="mt-2 w-full p-2 border border-gray-300 rounded-md text-sm"
-                        rows="2"
-                      />
-                      <button
-                        onClick={() => handleSubmitReview(item.id)}
-                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors duration-200"
-                      >
-                        Submit Review
-                      </button>
-                    </div>
-                  </div>
-                </div>
+      {/* Rating Modal */}
+      {showRating && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Rate Product</h2>
+            
+            {/* Simple Stars */}
+            <div className="flex justify-center gap-2 mb-6">
+              {[1,2,3,4,5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`text-3xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                >
+                  ★
+                </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Order Summary */}
-        <div className="space-y-6">
-          {/* Shipping Address */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <LocalShipping className="mr-2" />
-              Shipping Address
-            </h2>
-            <div className="text-sm text-gray-600">
-              <p>{order.shippingAddress.name}</p>
-              <p>{order.shippingAddress.street}</p>
-              <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
-              <p>{order.shippingAddress.country}</p>
-            </div>
-          </div>
+            {/* Review */}
+            <textarea
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder="Write your review (optional)"
+              className="w-full p-3 border rounded-lg mb-4"
+              rows="3"
+            />
 
-          {/* Payment Method */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <Payment className="mr-2" />
-              Payment Method
-            </h2>
-            <div className="text-sm text-gray-600">
-              <p>{order.paymentMethod.type} ending in {order.paymentMethod.last4}</p>
-              <p>Expires {order.paymentMethod.expDate}</p>
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <Assignment className="mr-2" />
-              Order Summary
-            </h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>${order.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>${order.shipping.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>${order.tax.toFixed(2)}</span>
-              </div>
-              <div className="border-t border-gray-200 pt-2 flex justify-between font-medium">
-                <span>Total</span>
-                <span>${order.total.toFixed(2)}</span>
-              </div>
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRating(false)}
+                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitRating}
+                disabled={submitting || rating === 0}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
-};
-export default OrderDetail;
+}

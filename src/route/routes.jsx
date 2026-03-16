@@ -28,6 +28,8 @@ import CartShopping from '../AdminPanel/Ecommerce/Layout/Pages/CartShopping';
 import AboutUs from '../AdminPanel/Ecommerce/Layout/Pages/Aboutus';
 import CustomerProfile from '../AdminPanel/Ecommerce/Layout/Pages/CustomerProfile';
 import ChatTest from '../AdminPanel/Ecommerce/Layout/Pages/ChatTest';
+import ProductListByCustomer from '../AdminPanel/Ecommerce/Layout/Pages/ProductListByCustomer';
+import ProductVariantDetail from '../AdminPanel/Ecommerce/Layout/Pages/ProductVariantDetail';
 
 
 const router = createBrowserRouter([
@@ -90,6 +92,14 @@ const router = createBrowserRouter([
       {
         path:'/profile',
         element: <CustomerProfile/>
+      },
+      {
+        path:'/products_by_customer',
+        element: <ProductListByCustomer/>
+      },
+      {
+        path:'/product_variants/:id',
+        element: <ProductVariantDetail/>
       }
       
     ]

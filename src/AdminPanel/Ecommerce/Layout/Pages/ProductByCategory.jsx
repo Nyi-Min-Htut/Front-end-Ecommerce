@@ -206,34 +206,7 @@ const ProductByCategory = () => {
         </div>
 
         {/* Category Filters */}
-        {categories && categories.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            <button
-              onClick={() => handleCategoryClick("all")}
-              className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeCategory === "all"
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-200 scale-105"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-blue-300 hover:shadow-md hover:scale-105"
-              }`}
-            >
-              All Products
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryClick(category.id)}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                  activeCategory === category.id.toString()
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-200 scale-105"
-                    : "bg-white text-gray-700 border border-gray-200 hover:border-blue-300 hover:shadow-md hover:scale-105"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-        )}
-
+   
         {/* Results Info */}
         <div className="text-center mb-8">
           <p className="text-gray-500 bg-white inline-block px-6 py-2 rounded-full shadow-sm">

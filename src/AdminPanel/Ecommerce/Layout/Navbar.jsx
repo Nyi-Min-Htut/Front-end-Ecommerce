@@ -219,7 +219,7 @@ const Navbar = ({ onSearchChange, onCartClick }) => {
 
               {/* Wishlist Icon */}
               <button 
-                onClick={() => navigate('/wishlist')}
+                onClick={() => navigate('/products_by_customer')}
                 className="ml-2 p-2 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <Favorite className="h-6 w-6" />

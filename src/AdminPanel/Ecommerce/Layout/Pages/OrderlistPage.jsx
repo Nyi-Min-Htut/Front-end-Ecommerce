@@ -10,10 +10,10 @@ import {
   FilterList,
   Search,
   ExpandMore,
-  ExpandLess
+  ExpandLess,
+  ChevronRight
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { getData } from '../../../../axios/axios';
 
 const OrderListPage = () => {
@@ -76,10 +76,13 @@ const OrderListPage = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await getData('orders/customer',null,'customer');
+      const response = await getData('orders/customer', null, 'customer');
 
-      if (response.status==200) {
-        setOrders(response.data.data);
+      if (response.status === 200) {
+        // Handle paginated response
+        const ordersData = response.data.data || response.data || [];
+        setOrders(ordersData);
+        console.log('Orders:', ordersData);
       }
     } catch (err) {
       setError('Failed to load orders. Please try again.');
@@ -105,24 +108,42 @@ const OrderListPage = () => {
     return 'Date not available';
   };
 
+  // Navigate to product detail using product_id (not variant_id)
+  const goToProductDetail = (item, e) => {
+    e.stopPropagation(); // Prevent triggering the parent click
+    
+    // In your API response, we don't have product_id directly
+    // You might need to fetch product details or extract from somewhere
+    // For now, let's log what we have
+    console.log('Item clicked:', item);
+    
+    // If you have product_id in the item, use it
+    // If not, you might need to navigate to a page that handles variant_id
+    // For now, let's use variant_id as fallback
+    const productId = item.product_id || item.product_variant_id;
+    
+    if (productId) {
+      navigate(`/product_variants/${productId}`);
+      toast.info(`Viewing product details`);
+    } else {
+      toast.error('Product ID not found');
+    }
+  };
+
   // Filter orders based on active filter and search term
   const filteredOrders = orders.filter(order => {
     const matchesFilter = activeFilter === 'all' || order.status === activeFilter;
-    const matchesSearch = order.order_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.items.some(item => 
-                           item.product_variant_name.toLowerCase().includes(searchTerm.toLowerCase())
-                         );
+    const matchesSearch = searchTerm === '' || 
+      order.order_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.items?.some(item => 
+        item.product_variant_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     return matchesFilter && matchesSearch;
   });
 
   // Toggle order expansion
   const toggleOrderExpansion = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
-
-  // View order details
-  const viewOrderDetails = (orderId) => {
-    navigate(`/orders/${orderId}`);
   };
 
   // Render loading state
@@ -182,14 +203,6 @@ const OrderListPage = () => {
             />
           </div>
 
-          {/* Filter Button (Mobile) */}
-          <div className="md:hidden">
-            <button className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              <FilterList className="h-5 w-5 mr-2 text-gray-500" />
-              Filter
-            </button>
-          </div>
-
           {/* Order Count */}
           <div className="text-sm text-gray-600">
             {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} found
@@ -235,18 +248,18 @@ const OrderListPage = () => {
                       <ShoppingBag className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-wrap gap-2">
                         <h3 className="font-semibold text-gray-900">{order.order_code}</h3>
-                        <span className={`ml-3 px-3 py-1 rounded-full text-xs font-medium ${status.color} ${status.borderColor} border`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${status.color} ${status.borderColor} border`}>
                           {status.icon}
-                          <span className="ml-1">{status.label}</span>
+                          <span>{status.label}</span>
                         </span>
                       </div>
                       <div className="mt-1 flex items-center text-sm text-gray-500">
                         <CalendarToday className="h-4 w-4 mr-1" />
                         <span>{getOrderDate(order.order_code)}</span>
                         <span className="mx-2">•</span>
-                        <span>{order.items.length} item{order.items.length !== 1 ? 's' : ''}</span>
+                        <span>{order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}</span>
                       </div>
                     </div>
                   </div>
@@ -254,7 +267,7 @@ const OrderListPage = () => {
                   <div className="flex items-center justify-between sm:justify-end mt-3 sm:mt-0">
                     <div className="text-right">
                       <div className="text-2xl font-bold text-gray-900">
-                        ${parseFloat(order.total_amount).toFixed(2)}
+                        ${parseFloat(order.total_amount || 0).toFixed(2)}
                       </div>
                       <div className="text-sm text-gray-500">Total amount</div>
                     </div>
@@ -276,51 +289,44 @@ const OrderListPage = () => {
                   <div className="mb-4">
                     <h4 className="font-medium text-gray-900 mb-3">Order Items</h4>
                     <div className="space-y-3">
-                      {order.items.map((item, index) => (
-                        <div key={item.id} className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
+                      {order.items?.map((item, index) => (
+                        <div 
+                          key={item.id} 
+                          className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer group"
+                          onClick={(e) => goToProductDetail(item, e)}
+                        >
+                          {/* Product Image */}
                           <div className="flex-shrink-0">
                             <img
                               src={item.product_image}
                               alt={item.product_variant_name}
-                              className="h-16 w-16 object-cover rounded-md"
+                              className="h-16 w-16 object-cover rounded-md group-hover:scale-105 transition-transform"
                               onError={(e) => {
-                                e.target.src = `https://via.placeholder.com/80x80?text=Product+${index + 1}`;
+                                e.target.src = `https://via.placeholder.com/80x80?text=Product`;
                               }}
                             />
                           </div>
+                          
+                          {/* Product Info */}
                           <div className="ml-4 flex-1">
-                            <h5 className="font-medium text-gray-900">{item.product_variant_name}</h5>
-                            <p className="text-sm text-gray-500">Variant ID: {item.product_variant_id}</p>
+                            <h5 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {item.product_variant_name}
+                            </h5>
+                            <p className="text-sm text-gray-500">
+                              Variant ID: {item.product_variant_id}
+                            </p>
+                            <p className="text-xs text-blue-600 mt-1">
+                              Click to view product details
+                            </p>
                           </div>
-                          <div className="text-right">
-                            <div className="text-sm font-medium text-gray-900">Item #{index + 1}</div>
+                          
+                          {/* Action */}
+                          <div className="flex items-center gap-3">
+                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => viewOrderDetails(order.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-                    >
-                      View Full Details
-                    </button>
-                    {order.status === 'delivered' && (
-                      <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium">
-                        Leave Review
-                      </button>
-                    )}
-                    {order.status === 'pending' && (
-                      <button className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors duration-200 font-medium">
-                        Cancel Order
-                      </button>
-                    )}
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium">
-                      Track Order
-                    </button>
                   </div>
                 </div>
               )}
